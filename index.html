@@ -480,108 +480,119 @@ async function fetchHubSpot(){
     const afterTs=Date.now()-(daysBack*24*60*60*1000);
     dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
 
-    // Use /recent endpoint — guaranteed newest-first order
-    // Falls back to paginating /paged if needed
+    // Use CRM v3 search API — query calls and meetings directly by date range
+    // This skips emails entirely and is not affected by pagination order
     let allEngagements=[];
-    let offset=0;
-    let hasMore=true;
-    let page=0;
 
-    while(hasMore && page<30){
-      page++;
-      dbg('Fetching engagements page '+page+', offset '+offset);
+    for(const engType of ['calls','meetings']){
+      let after=undefined;
+      let page=0;
+      let typeTotal=0;
 
-      // /recent returns engagements newest-first, sorted by lastUpdated
-      const data=await hsGet('/engagements/v1/engagements/recent/modified',{
-        count:250,
-        offset:offset
-      });
+      while(page<20){
+        page++;
+        dbg('Fetching '+engType+' page '+page);
 
-      const results=data.results||[];
-      dbg('Page '+page+': got '+results.length+' engagements');
+        const body={
+          filterGroups:[{
+            filters:[
+              {propertyName:'hs_timestamp',operator:'GTE',value:String(afterTs)},
+              {propertyName:'hs_timestamp',operator:'LTE',value:String(Date.now())}
+            ]
+          }],
+          properties:['hs_timestamp','hubspot_owner_id','hs_engagement_type',
+                      'hs_activity_type','hs_call_status','hs_meeting_outcome'],
+          sorts:[{propertyName:'hs_timestamp',direction:'DESCENDING'}],
+          limit:100,
+          ...(after?{after}:{})
+        };
 
-      if(page===1 && results.length>0){
-        const s=results[0];
-        const sTs=s.engagement?.timestamp||s.engagement?.lastUpdated||s.engagement?.createdAt||0;
-        dbg('Newest engagement: type='+s.engagement?.type+' date='+localDateStr(sTs)+' owner='+ownerMap[String(s.engagement?.ownerId||'')]);
+        let data;
+        try{
+          data=await hsPost('/crm/v3/objects/'+engType+'/search',body);
+        }catch(err){
+          dbg('Search error for '+engType+': '+err.message);
+          break;
+        }
+
+        const results=data.results||[];
+        dbg(engType+' page '+page+': got '+results.length+' results');
+
+        if(results.length===0) break;
+
+        // Normalize to same shape as v1 for downstream processing
+        results.forEach(r=>{
+          const ts=parseInt(r.properties?.hs_timestamp||0);
+          const ownerId=String(r.properties?.hubspot_owner_id||'');
+          allEngagements.push({
+            _type: engType==='calls'?'CALL':'MEETING',
+            _ts: ts,
+            _ownerId: ownerId,
+            _id: r.id,
+            _associations: r.associations
+          });
+          typeTotal++;
+        });
+
+        after=data.paging?.next?.after;
+        if(!after) break;
       }
-
-      if(results.length===0) break;
-
-      // Filter to calls and meetings within our date window
-      let hitBoundary=false;
-      for(const e of results){
-        const ts=e.engagement?.timestamp||e.engagement?.lastUpdated||e.engagement?.createdAt||0;
-        const type=(e.engagement?.type||'').toUpperCase();
-        if(ts<afterTs){ hitBoundary=true; break; }
-        if(type==='CALL'||type==='MEETING') allEngagements.push(e);
-      }
-
-      if(hitBoundary){ dbg('Reached date boundary at page '+page+', stopping'); break; }
-
-      hasMore=data.hasMore||false;
-      offset=data.offset||0;
-      if(!hasMore) break;
+      dbg('Total '+engType+' fetched: '+typeTotal);
     }
 
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
       const sample=allEngagements.slice(0,5).map(e=>{
-        const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
-        return (e.engagement?.type||'?')+' '+localDateStr(ts)+' owner:'+ownerMap[String(e.engagement?.ownerId||'')];
+        return e._type+' '+localDateStr(e._ts)+' owner:'+ownerMap[e._ownerId];
       });
-      dbg('Sample engagements (type date owner): '+sample.join(' | '));
+      dbg('Sample (type date owner): '+sample.join(' | '));
     } else {
-      dbg('WARNING: 0 calls/meetings found in '+page+' pages. Check activity types in HubSpot.');
+      dbg('WARNING: 0 calls/meetings found. Check scopes and HubSpot activity data.');
     }
 
     // 3. Process engagements
     state.logs={};
 
-    // Sort meetings ascending to detect second meetings
+    // Split into calls and meetings using normalized shape
     const meetings=allEngagements
-      .filter(e=>(e.engagement?.type||'').toUpperCase()==='MEETING')
-      .sort((a,b)=>(a.engagement?.createdAt||0)-(b.engagement?.createdAt||0));
+      .filter(e=>e._type==='MEETING')
+      .sort((a,b)=>a._ts-b._ts); // ascending for second-meeting detection
 
-    const calls=allEngagements
-      .filter(e=>(e.engagement?.type||'').toUpperCase()==='CALL');
-
-    dbg(`Calls: ${calls.length}, Meetings: ${meetings.length}`);
+    const calls=allEngagements.filter(e=>e._type==='CALL');
+    dbg('Calls: '+calls.length+', Meetings: '+meetings.length);
 
     // Process calls
     calls.forEach(e=>{
-      const ownerId=String(e.engagement?.ownerId||'');
-      const ownerName=ownerMap[ownerId]||'';
+      const ownerName=ownerMap[e._ownerId]||'';
       if(!ownerName)return;
-      const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
-      const isoDate=localDateStr(ts);
+      const isoDate=localDateStr(e._ts);
       const act=state.activities.find(a=>a.type==='calls');
       if(!act)return;
       if(!state.logs[ownerName])state.logs[ownerName]={};
       if(!state.logs[ownerName][isoDate])state.logs[ownerName][isoDate]={};
       state.logs[ownerName][isoDate][act.id]=(state.logs[ownerName][isoDate][act.id]||0)+1;
+      dbg('Call: '+ownerName+' on '+isoDate);
     });
 
     // Track which contacts have been met per owner (for second meeting detection)
-    const meetingTracker={}; // ownerId -> Set of contactIds already met
+    const meetingTracker={};
 
     // Process meetings — fetch fleet size per contact
     for(const e of meetings){
-      const ownerId=String(e.engagement?.ownerId||'');
-      const ownerName=ownerMap[ownerId]||'';
+      const ownerName=ownerMap[e._ownerId]||'';
       if(!ownerName)continue;
-      const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
-      const isoDate=localDateStr(ts);
-      const contactIds=(e.associations?.contactIds||[]);
-      const contactId=String(contactIds[0]||'');
+      const isoDate=localDateStr(e._ts);
+      // Get associated contact from CRM associations
+      const assocContacts=e._associations?.contacts?.results||[];
+      const contactId=String(assocContacts[0]?.id||'');
 
       if(!state.logs[ownerName])state.logs[ownerName]={};
       if(!state.logs[ownerName][isoDate])state.logs[ownerName][isoDate]={};
 
       // Check second meeting
-      if(!meetingTracker[ownerId])meetingTracker[ownerId]=new Set();
-      const isSecond=contactId&&meetingTracker[ownerId].has(contactId);
-      if(contactId)meetingTracker[ownerId].add(contactId);
+      if(!meetingTracker[e._ownerId])meetingTracker[e._ownerId]=new Set();
+      const isSecond=contactId&&meetingTracker[e._ownerId].has(contactId);
+      if(contactId)meetingTracker[e._ownerId].add(contactId);
 
       if(isSecond){
         const act=state.activities.find(a=>a.type==='second_meeting');
