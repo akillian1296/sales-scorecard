@@ -496,21 +496,21 @@ async function fetchHubSpot(){
         page++;
         dbg('Fetching '+engType+' page '+page);
 
+        // Build minimal valid search body for HubSpot v3
         const body={
           filterGroups:[{
-            filters:[
-              {propertyName:'createdate',operator:'GTE',value:String(afterTs)},
-              {propertyName:'createdate',operator:'LTE',value:String(Date.now())}
-            ]
+            filters:[{
+              propertyName:'createdate',
+              operator:'BETWEEN',
+              highValue:String(Date.now()),
+              value:String(afterTs)
+            }]
           }],
-          properties:[
-            'createdate','hubspot_owner_id','hs_timestamp',
-            'hs_meeting_start_time','hs_call_status','hs_meeting_outcome'
-          ],
+          properties:['createdate','hubspot_owner_id','hs_call_status','hs_meeting_outcome'],
           sorts:[{propertyName:'createdate',direction:'DESCENDING'}],
-          limit:100,
-          ...(after?{after}:{})
+          limit:100
         };
+        if(after) body.after=after;
 
         let data;
         try{
