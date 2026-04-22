@@ -392,9 +392,12 @@ function setStatus(mode,text){
   span.textContent=text;
 }
 
+const WORKER='https://noisy-leaf-5700.akillian.workers.dev/?url=';
+
 async function hsGet(path,params={}){
   const qs=new URLSearchParams(params).toString();
-  const url=`https://api.hubapi.com${path}${qs?'?'+qs:''}`;
+  const target=`https://api.hubapi.com${path}${qs?'?'+qs:''}`;
+  const url=WORKER+encodeURIComponent(target);
   dbg(`GET ${path}${qs?'?'+qs:''}`);
   const res=await fetch(url,{
     headers:{'Authorization':'Bearer '+cfg.token,'Content-Type':'application/json'}
@@ -409,7 +412,8 @@ async function hsGet(path,params={}){
 }
 
 async function hsPost(path,body){
-  const url=`https://api.hubapi.com${path}`;
+  const target=`https://api.hubapi.com${path}`;
+  const url=WORKER+encodeURIComponent(target);
   dbg(`POST ${path}`);
   const res=await fetch(url,{
     method:'POST',
