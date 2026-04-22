@@ -500,9 +500,11 @@ async function fetchHubSpot(){
               {propertyName:'hs_timestamp',operator:'LTE',value:String(Date.now())}
             ]
           }],
-          properties:['hs_timestamp','hubspot_owner_id','hs_engagement_type',
-                      'hs_activity_type','hs_call_status','hs_meeting_outcome',
-                      'hs_meeting_start_time','createdate','hs_lastmodifieddate'],
+          properties:[
+            'hs_timestamp','hubspot_owner_id','createdate','hs_lastmodifieddate',
+            'hs_call_created_date','hs_meeting_start_time','hs_meeting_end_time',
+            'hs_activity_type','hs_call_status','hs_meeting_outcome'
+          ],
           sorts:[{propertyName:'hs_timestamp',direction:'DESCENDING'}],
           limit:100,
           ...(after?{after}:{})
@@ -521,7 +523,12 @@ async function fetchHubSpot(){
 
         if(page===1 && results.length>0){
           const r0=results[0];
-          dbg(engType+' sample props: '+JSON.stringify(r0.properties).slice(0,300));
+          const p=r0.properties||{};
+          dbg(engType+' date fields — hs_timestamp:'+p.hs_timestamp
+            +' createdate:'+p.createdate
+            +' hs_call_created_date:'+p.hs_call_created_date
+            +' hs_meeting_start_time:'+p.hs_meeting_start_time
+            +' hs_lastmodifieddate:'+p.hs_lastmodifieddate);
         }
 
         if(results.length===0) break;
@@ -530,15 +537,18 @@ async function fetchHubSpot(){
         results.forEach(r=>{
           const ts=parseInt(r.properties?.hs_timestamp||0);
           const ownerId=String(r.properties?.hubspot_owner_id||'');
-          // v3 uses different property names depending on object type
-          // calls: hs_timestamp or createdate
-          // meetings: hs_timestamp or hs_meeting_start_time
-          const tsRaw = r.properties?.hs_timestamp
-            || r.properties?.hs_meeting_start_time
-            || r.properties?.hs_lastmodifieddate
-            || r.properties?.createdate
-            || null;
+          // Try every known date field — use first non-zero value
+          const tsRaw = (engType==='meetings')
+            ? (r.properties?.hs_meeting_start_time
+                || r.properties?.hs_timestamp
+                || r.properties?.createdate
+                || r.properties?.hs_lastmodifieddate)
+            : (r.properties?.hs_timestamp
+                || r.properties?.hs_call_created_date
+                || r.properties?.createdate
+                || r.properties?.hs_lastmodifieddate);
           const tsVal = tsRaw ? parseInt(tsRaw) : 0;
+          if(tsVal===0) dbg('WARNING: no date found for '+engType+' id='+r.id+' props='+JSON.stringify(r.properties).slice(0,200));
 
           allEngagements.push({
             _type: engType==='calls'?'CALL':'MEETING',
