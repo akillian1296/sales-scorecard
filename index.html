@@ -480,53 +480,48 @@ async function fetchHubSpot(){
     const afterTs=Date.now()-(daysBack*24*60*60*1000);
     dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
 
-    // Use v1 engagements endpoint — compatible with sales-email-read + timeline
+    // Use /recent endpoint — guaranteed newest-first order
+    // Falls back to paginating /paged if needed
     let allEngagements=[];
     let offset=0;
     let hasMore=true;
     let page=0;
 
-    while(hasMore && page<20){
+    while(hasMore && page<30){
       page++;
-      dbg(`Fetching engagements page ${page}, offset ${offset}`);
-      const data=await hsGet('/engagements/v1/engagements/paged',{
-        limit:250,
-        offset:offset,
-        sort:'lastUpdated',
-        order:'desc'
-      });
-      const results=data.results||[];
-      dbg(`Page ${page}: got ${results.length} engagements`);
+      dbg('Fetching engagements page '+page+', offset '+offset);
 
-      // Filter by type only — collect calls and meetings
-      // Date filtering happens later using activityDate (not createdAt)
-      const filtered=results.filter(e=>{
-        const type=(e.engagement?.type||'').toUpperCase();
-        return type==='CALL'||type==='MEETING';
+      // /recent returns engagements newest-first, sorted by lastUpdated
+      const data=await hsGet('/engagements/v1/engagements/recent/modified',{
+        count:250,
+        offset:offset
       });
-      allEngagements=allEngagements.concat(filtered);
+
+      const results=data.results||[];
+      dbg('Page '+page+': got '+results.length+' engagements');
+
+      if(page===1 && results.length>0){
+        const s=results[0];
+        const sTs=s.engagement?.timestamp||s.engagement?.lastUpdated||s.engagement?.createdAt||0;
+        dbg('Newest engagement: type='+s.engagement?.type+' date='+localDateStr(sTs)+' owner='+ownerMap[String(s.engagement?.ownerId||'')]);
+      }
+
+      if(results.length===0) break;
+
+      // Filter to calls and meetings within our date window
+      let hitBoundary=false;
+      for(const e of results){
+        const ts=e.engagement?.timestamp||e.engagement?.lastUpdated||e.engagement?.createdAt||0;
+        const type=(e.engagement?.type||'').toUpperCase();
+        if(ts<afterTs){ hitBoundary=true; break; }
+        if(type==='CALL'||type==='MEETING') allEngagements.push(e);
+      }
+
+      if(hitBoundary){ dbg('Reached date boundary at page '+page+', stopping'); break; }
+
       hasMore=data.hasMore||false;
       offset=data.offset||0;
-
-      // Log first engagement on first page so we can see the data structure
-      if(page===1 && results.length>0){
-        const sample=results[0];
-        dbg('Sample engagement keys: '+Object.keys(sample.engagement||{}).join(', '));
-        const sTs=sample.engagement?.timestamp||sample.engagement?.createdAt||0;
-        dbg('Sample engagement: type='+sample.engagement?.type+
-            ' date='+localDateStr(sTs)+
-            ' timestamp='+sample.engagement?.timestamp+
-            ' ownerId='+sample.engagement?.ownerId);
-      }
-
-      // Stop if oldest engagement on this page is beyond our window
-      if(results.length>0){
-        // API is sorted newest-first — stop when oldest item on page is beyond our window
-        const oldest=Math.min(...results.map(e=>{
-          return e.engagement?.timestamp||e.engagement?.createdAt||Date.now();
-        }));
-        if(oldest<afterTs){dbg('Reached date boundary at page '+page+', stopping');break;}
-      }
+      if(!hasMore) break;
     }
 
     dbg('Total relevant engagements: '+allEngagements.length);
