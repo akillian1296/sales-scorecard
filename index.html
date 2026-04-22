@@ -148,7 +148,7 @@ input[type=text]:focus,input[type=password]:focus{outline:1px solid var(--accent
 
 .last-updated{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
 
-.debug-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.8;margin-top:12px;display:none;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.debug-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.8;margin-top:12px;display:none;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
 .debug-box.show{display:block}
 
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999}
@@ -325,9 +325,12 @@ function loadState(){
 // ── Debug log ─────────────────────────────────────────────
 function dbg(msg){
   const ts=new Date().toLocaleTimeString();
-  debugLines.push(`[${ts}] ${msg}`);
+  debugLines.push('['+ts+'] '+msg);
   const box=document.getElementById('debug-box');
-  if(box) box.textContent=debugLines.slice(-30).join('\n');
+  if(box){
+    box.textContent=debugLines.slice(-200).join('\n');
+    box.scrollTop=0; // keep top visible so key diagnostic lines aren't hidden
+  }
   console.log('[SS]',msg);
 }
 function toggleDebug(){
