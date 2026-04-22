@@ -491,7 +491,9 @@ async function fetchHubSpot(){
       dbg(`Fetching engagements page ${page}, offset ${offset}`);
       const data=await hsGet('/engagements/v1/engagements/paged',{
         limit:250,
-        offset:offset
+        offset:offset,
+        sort:'lastUpdated',
+        order:'desc'
       });
       const results=data.results||[];
       dbg(`Page ${page}: got ${results.length} engagements`);
@@ -510,17 +512,18 @@ async function fetchHubSpot(){
       if(page===1 && results.length>0){
         const sample=results[0];
         dbg('Sample engagement keys: '+Object.keys(sample.engagement||{}).join(', '));
+        const sTs=sample.engagement?.timestamp||sample.engagement?.createdAt||0;
         dbg('Sample engagement: type='+sample.engagement?.type+
-            ' createdAt='+sample.engagement?.createdAt+
-            ' activityDate='+sample.engagement?.activityDate+
+            ' date='+localDateStr(sTs)+
             ' timestamp='+sample.engagement?.timestamp+
             ' ownerId='+sample.engagement?.ownerId);
       }
 
       // Stop if oldest engagement on this page is beyond our window
       if(results.length>0){
+        // API is sorted newest-first — stop when oldest item on page is beyond our window
         const oldest=Math.min(...results.map(e=>{
-          return e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||Date.now();
+          return e.engagement?.timestamp||e.engagement?.createdAt||Date.now();
         }));
         if(oldest<afterTs){dbg('Reached date boundary at page '+page+', stopping');break;}
       }
@@ -529,7 +532,7 @@ async function fetchHubSpot(){
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
       const sample=allEngagements.slice(0,5).map(e=>{
-        const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
+        const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
         return (e.engagement?.type||'?')+' '+localDateStr(ts)+' owner:'+ownerMap[String(e.engagement?.ownerId||'')];
       });
       dbg('Sample engagements (type date owner): '+sample.join(' | '));
@@ -555,8 +558,7 @@ async function fetchHubSpot(){
       const ownerId=String(e.engagement?.ownerId||'');
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)return;
-      // Use activityDate (when it happened) not createdAt (when logged in HubSpot)
-      const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
+      const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
       const isoDate=localDateStr(ts);
       const act=state.activities.find(a=>a.type==='calls');
       if(!act)return;
@@ -573,7 +575,7 @@ async function fetchHubSpot(){
       const ownerId=String(e.engagement?.ownerId||'');
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)continue;
-      const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
+      const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
       const isoDate=localDateStr(ts);
       const contactIds=(e.associations?.contactIds||[]);
       const contactId=String(contactIds[0]||'');
