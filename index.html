@@ -483,88 +483,105 @@ async function fetchHubSpot(){
     const afterTs=Date.now()-(daysBack*24*60*60*1000);
     dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
 
-    // Strategy: find total engagement count, jump to last page, read backwards
-    // This gets us to recent data immediately without scanning 6 years of history
-
+    // Approach: fetch contacts recently modified, then get their engagements
+    // Uses only crm.objects.contacts.read — no calls/meetings scope needed
     let allEngagements=[];
 
-    // Step 1: get total count from first page
-    dbg('Getting total engagement count...');
-    const firstPage=await hsGet('/engagements/v1/engagements/paged',{limit:1,offset:0});
-    const totalEngagements=firstPage.total||0;
-    dbg('Total engagements in portal: '+totalEngagements);
+    // Build owner id -> name map for active reps only
+    const activeRepNames=new Set(state.reps.filter(r=>r.active!==false).map(r=>r.name));
+    const activeOwnerIds=Object.entries(ownerMap)
+      .filter(([id,name])=>activeRepNames.has(name))
+      .map(([id])=>id);
 
-    if(totalEngagements===0){
-      dbg('No engagements found in portal.');
+    dbg('Active owner IDs: '+activeOwnerIds.join(', '));
+
+    if(activeOwnerIds.length===0){
+      dbg('No active reps — go to Settings to mark reps as active');
     } else {
-      const pageSize=250;
-      // Calculate starting offset — last page
-      let startOffset=Math.max(0, Math.floor((totalEngagements-1)/pageSize)*pageSize);
-      let consecutiveOldPages=0;
-      let page=0;
-      let totalScanned=0;
+      // For each active owner, fetch their recently modified contacts
+      for(const ownerId of activeOwnerIds){
+        const ownerName=ownerMap[ownerId];
+        dbg('Fetching contacts for '+ownerName+'...');
 
-      dbg('Starting from offset '+startOffset+' (newest data), working backwards');
+        let contactIds=[];
+        let after=undefined;
+        let contactPage=0;
 
-      // Read from newest to oldest
-      while(startOffset>=0 && page<60){
-        page++;
-        const data=await hsGet('/engagements/v1/engagements/paged',{
-          limit:pageSize,
-          offset:startOffset
-        });
-        const results=data.results||[];
-        totalScanned+=results.length;
+        while(contactPage<10){
+          contactPage++;
+          const body={
+            filterGroups:[{
+              filters:[
+                {propertyName:'hubspot_owner_id',operator:'EQ',value:ownerId},
+                {propertyName:'lastmodifieddate',operator:'GTE',value:String(afterTs)}
+              ]
+            }],
+            properties:['hubspot_owner_id','lastmodifieddate'],
+            sorts:[{propertyName:'lastmodifieddate',direction:'DESCENDING'}],
+            limit:100
+          };
+          if(after) body.after=after;
 
-        if(results.length===0) break;
-
-        // Log sample from first page we read (newest)
-        if(page===1){
-          const s=results[results.length-1]; // last item = newest on this page
-          const sTs=s.engagement?.timestamp||s.engagement?.createdAt||0;
-          dbg('Newest engagement sample: type='+s.engagement?.type+' date='+localDateStr(sTs));
-        }
-
-        let recentOnPage=0;
-        let allOlderThanWindow=true;
-
-        results.forEach(e=>{
-          const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
-          const type=(e.engagement?.type||'').toUpperCase();
-          if(ts>=afterTs){
-            allOlderThanWindow=false;
-            if(type==='CALL'||type==='MEETING'){
-              allEngagements.push({
-                _type:type,
-                _ts:ts,
-                _ownerId:String(e.engagement?.ownerId||''),
-                _id:String(e.engagement?.id||''),
-                _associations:e.associations
-              });
-              recentOnPage++;
-            }
-          }
-        });
-
-        dbg('Page '+page+' (offset '+startOffset+'): scanned '+results.length+', recent calls/meetings: '+recentOnPage);
-
-        // Stop if entire page is older than our window
-        if(allOlderThanWindow){
-          consecutiveOldPages++;
-          if(consecutiveOldPages>=2){
-            dbg('Passed date boundary, stopping');
+          let data;
+          try{
+            data=await hsPost('/crm/v3/objects/contacts/search',body);
+          }catch(err){
+            dbg('Contact search error for '+ownerName+': '+err.message);
             break;
           }
-        } else {
-          consecutiveOldPages=0;
+
+          const results=data.results||[];
+          contactIds=contactIds.concat(results.map(r=>r.id));
+          after=data.paging?.next?.after;
+          if(!after||results.length===0) break;
         }
 
-        // Move to previous page (go backwards)
-        startOffset=startOffset-pageSize;
-        if(startOffset<0) break;
+        dbg(ownerName+': found '+contactIds.length+' recently modified contacts');
+        if(contactIds.length===0) continue;
+
+        // For each contact, fetch their engagements via associations
+        // Batch in groups of 10 to avoid rate limits
+        const batchSize=10;
+        for(let i=0;i<contactIds.length;i+=batchSize){
+          const batch=contactIds.slice(i,i+batchSize);
+
+          await Promise.all(batch.map(async contactId=>{
+            try{
+              // Get engagements associated with this contact
+              const engData=await hsGet(
+                '/crm/v4/objects/contacts/'+contactId+'/associations/engagements',
+                {limit:100}
+              );
+              const engIds=(engData.results||[]).map(r=>r.toObjectId);
+              if(engIds.length===0) return;
+
+              // Fetch each engagement detail
+              await Promise.all(engIds.slice(0,20).map(async engId=>{
+                try{
+                  const eng=await hsGet('/engagements/v1/engagements/'+engId);
+                  const ts=eng.engagement?.timestamp||eng.engagement?.createdAt||0;
+                  const type=(eng.engagement?.type||'').toUpperCase();
+                  if(ts>=afterTs && (type==='CALL'||type==='MEETING')){
+                    allEngagements.push({
+                      _type:type,
+                      _ts:ts,
+                      _ownerId:String(eng.engagement?.ownerId||ownerId),
+                      _id:String(eng.engagement?.id||engId),
+                      _associations:eng.associations,
+                      _contactId:contactId
+                    });
+                  }
+                }catch(e){ /* skip individual engagement errors */ }
+              }));
+            }catch(e){
+              dbg('Association fetch error for contact '+contactId+': '+e.message);
+            }
+          }));
+        }
+        dbg(ownerName+': total engagements found so far: '+allEngagements.length);
       }
-      dbg('Done: scanned '+totalScanned+' engagements, found '+allEngagements.length+' calls/meetings in last 35 days');
     }
+    dbg('Fetch complete: '+allEngagements.length+' total calls/meetings in last 35 days');
 
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
@@ -608,7 +625,7 @@ async function fetchHubSpot(){
       const isoDate=localDateStr(e._ts);
       // Get associated contact from CRM associations
       const assocContacts=e._associations?.contacts?.results||[];
-      const contactId=String(assocContacts[0]?.id||'');
+      const contactId=e._contactId||String(assocContacts[0]?.id||'');
 
       if(!state.logs[ownerName])state.logs[ownerName]={};
       if(!state.logs[ownerName][isoDate])state.logs[ownerName][isoDate]={};
