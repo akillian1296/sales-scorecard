@@ -499,16 +499,15 @@ async function fetchHubSpot(){
         const body={
           filterGroups:[{
             filters:[
-              {propertyName:'hs_timestamp',operator:'GTE',value:String(afterTs)},
-              {propertyName:'hs_timestamp',operator:'LTE',value:String(Date.now())}
+              {propertyName:'createdate',operator:'GTE',value:String(afterTs)},
+              {propertyName:'createdate',operator:'LTE',value:String(Date.now())}
             ]
           }],
           properties:[
-            'hs_timestamp','hubspot_owner_id','createdate','hs_lastmodifieddate',
-            'hs_call_created_date','hs_meeting_start_time','hs_meeting_end_time',
-            'hs_activity_type','hs_call_status','hs_meeting_outcome'
+            'createdate','hubspot_owner_id','hs_timestamp',
+            'hs_meeting_start_time','hs_call_status','hs_meeting_outcome'
           ],
-          sorts:[{propertyName:'hs_timestamp',direction:'DESCENDING'}],
+          sorts:[{propertyName:'createdate',direction:'DESCENDING'}],
           limit:100,
           ...(after?{after}:{})
         };
@@ -527,11 +526,8 @@ async function fetchHubSpot(){
         if(page===1 && results.length>0){
           const r0=results[0];
           const p=r0.properties||{};
-          dbg(engType+' date fields — hs_timestamp:'+p.hs_timestamp
-            +' createdate:'+p.createdate
-            +' hs_call_created_date:'+p.hs_call_created_date
-            +' hs_meeting_start_time:'+p.hs_meeting_start_time
-            +' hs_lastmodifieddate:'+p.hs_lastmodifieddate);
+          const sampleTs=p.createdate||p.hs_meeting_start_time||p.hs_timestamp||'null';
+          dbg(engType+' SAMPLE: createdate='+p.createdate+' owner='+p.hubspot_owner_id+' date='+localDateStr(parseInt(sampleTs)||0));
         }
 
         if(results.length===0) break;
@@ -540,18 +536,11 @@ async function fetchHubSpot(){
         results.forEach(r=>{
           const ts=parseInt(r.properties?.hs_timestamp||0);
           const ownerId=String(r.properties?.hubspot_owner_id||'');
-          // Try every known date field — use first non-zero value
-          const tsRaw = (engType==='meetings')
-            ? (r.properties?.hs_meeting_start_time
-                || r.properties?.hs_timestamp
-                || r.properties?.createdate
-                || r.properties?.hs_lastmodifieddate)
-            : (r.properties?.hs_timestamp
-                || r.properties?.hs_call_created_date
-                || r.properties?.createdate
-                || r.properties?.hs_lastmodifieddate);
+          // createdate is the reliable date field for both calls and meetings in v3
+          const tsRaw = r.properties?.createdate
+            || r.properties?.hs_meeting_start_time
+            || r.properties?.hs_timestamp;
           const tsVal = tsRaw ? parseInt(tsRaw) : 0;
-          if(tsVal===0) dbg('WARNING: no date found for '+engType+' id='+r.id+' props='+JSON.stringify(r.properties).slice(0,200));
 
           allEngagements.push({
             _type: engType==='calls'?'CALL':'MEETING',
@@ -600,7 +589,7 @@ async function fetchHubSpot(){
       if(!state.logs[ownerName])state.logs[ownerName]={};
       if(!state.logs[ownerName][isoDate])state.logs[ownerName][isoDate]={};
       state.logs[ownerName][isoDate][act.id]=(state.logs[ownerName][isoDate][act.id]||0)+1;
-      dbg('Call: '+ownerName+' on '+isoDate);
+
     });
 
     // Track which contacts have been met per owner (for second meeting detection)
