@@ -496,32 +496,45 @@ async function fetchHubSpot(){
       const results=data.results||[];
       dbg(`Page ${page}: got ${results.length} engagements`);
 
-      // Filter by date and type
+      // Filter by type only — collect calls and meetings
+      // Date filtering happens later using activityDate (not createdAt)
       const filtered=results.filter(e=>{
-        const ts=e.engagement?.createdAt||0;
         const type=(e.engagement?.type||'').toUpperCase();
-        return ts>=afterTs && (type==='CALL'||type==='MEETING');
+        return type==='CALL'||type==='MEETING';
       });
       allEngagements=allEngagements.concat(filtered);
       hasMore=data.hasMore||false;
       offset=data.offset||0;
 
-      // If all results on this page are older than our window, stop
+      // Log first engagement on first page so we can see the data structure
+      if(page===1 && results.length>0){
+        const sample=results[0];
+        dbg('Sample engagement keys: '+Object.keys(sample.engagement||{}).join(', '));
+        dbg('Sample engagement: type='+sample.engagement?.type+
+            ' createdAt='+sample.engagement?.createdAt+
+            ' activityDate='+sample.engagement?.activityDate+
+            ' timestamp='+sample.engagement?.timestamp+
+            ' ownerId='+sample.engagement?.ownerId);
+      }
+
+      // Stop if oldest engagement on this page is beyond our window
       if(results.length>0){
-        const oldest=Math.min(...results.map(e=>e.engagement?.createdAt||Date.now()));
-        if(oldest<afterTs){dbg('Reached date boundary, stopping pagination');break;}
+        const oldest=Math.min(...results.map(e=>{
+          return e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||Date.now();
+        }));
+        if(oldest<afterTs){dbg('Reached date boundary at page '+page+', stopping');break;}
       }
     }
 
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
-      const sample=allEngagements.slice(0,3).map(e=>{
-        const ts=e.engagement?.createdAt||0;
+      const sample=allEngagements.slice(0,5).map(e=>{
+        const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
         return (e.engagement?.type||'?')+' '+localDateStr(ts)+' owner:'+ownerMap[String(e.engagement?.ownerId||'')];
       });
-      dbg('Sample engagements: '+sample.join(' | '));
+      dbg('Sample engagements (type date owner): '+sample.join(' | '));
     } else {
-      dbg('WARNING: No engagements found. Check HubSpot has calls/meetings logged in last 35 days.');
+      dbg('WARNING: 0 calls/meetings found in '+page+' pages. Check activity types in HubSpot.');
     }
 
     // 3. Process engagements
@@ -542,7 +555,8 @@ async function fetchHubSpot(){
       const ownerId=String(e.engagement?.ownerId||'');
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)return;
-      const ts=e.engagement?.createdAt||0;
+      // Use activityDate (when it happened) not createdAt (when logged in HubSpot)
+      const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
       const isoDate=localDateStr(ts);
       const act=state.activities.find(a=>a.type==='calls');
       if(!act)return;
@@ -559,7 +573,7 @@ async function fetchHubSpot(){
       const ownerId=String(e.engagement?.ownerId||'');
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)continue;
-      const ts=e.engagement?.createdAt||0;
+      const ts=e.engagement?.activityDate||e.engagement?.timestamp||e.engagement?.createdAt||0;
       const isoDate=localDateStr(ts);
       const contactIds=(e.associations?.contactIds||[]);
       const contactId=String(contactIds[0]||'');
