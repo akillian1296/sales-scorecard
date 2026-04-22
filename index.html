@@ -483,89 +483,95 @@ async function fetchHubSpot(){
     const afterTs=Date.now()-(daysBack*24*60*60*1000);
     dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
 
-    // Use CRM v3 search API — query calls and meetings directly by date range
-    // This skips emails entirely and is not affected by pagination order
+    // Strategy: find total engagement count, jump to last page, read backwards
+    // This gets us to recent data immediately without scanning 6 years of history
+
     let allEngagements=[];
 
-    for(const engType of ['calls','meetings']){
-      let after=undefined;
+    // Step 1: get total count from first page
+    dbg('Getting total engagement count...');
+    const firstPage=await hsGet('/engagements/v1/engagements/paged',{limit:1,offset:0});
+    const totalEngagements=firstPage.total||0;
+    dbg('Total engagements in portal: '+totalEngagements);
+
+    if(totalEngagements===0){
+      dbg('No engagements found in portal.');
+    } else {
+      const pageSize=250;
+      // Calculate starting offset — last page
+      let startOffset=Math.max(0, Math.floor((totalEngagements-1)/pageSize)*pageSize);
+      let consecutiveOldPages=0;
       let page=0;
-      let typeTotal=0;
+      let totalScanned=0;
 
-      while(page<20){
+      dbg('Starting from offset '+startOffset+' (newest data), working backwards');
+
+      // Read from newest to oldest
+      while(startOffset>=0 && page<60){
         page++;
-        dbg('Fetching '+engType+' page '+page);
-
-        // Build minimal valid search body for HubSpot v3
-        const body={
-          filterGroups:[{
-            filters:[{
-              propertyName:'createdate',
-              operator:'BETWEEN',
-              highValue:String(Date.now()),
-              value:String(afterTs)
-            }]
-          }],
-          properties:['createdate','hubspot_owner_id','hs_call_status','hs_meeting_outcome'],
-          sorts:[{propertyName:'createdate',direction:'DESCENDING'}],
-          limit:100
-        };
-        if(after) body.after=after;
-
-        let data;
-        try{
-          data=await hsPost('/crm/v3/objects/'+engType+'/search',body);
-        }catch(err){
-          dbg('Search error for '+engType+': '+err.message);
-          break;
-        }
-
+        const data=await hsGet('/engagements/v1/engagements/paged',{
+          limit:pageSize,
+          offset:startOffset
+        });
         const results=data.results||[];
-        dbg(engType+' page '+page+': got '+results.length+' results');
-
-        if(page===1 && results.length>0){
-          const r0=results[0];
-          const p=r0.properties||{};
-          const sampleTs=p.createdate||p.hs_meeting_start_time||p.hs_timestamp||'null';
-          dbg(engType+' SAMPLE: createdate='+p.createdate+' owner='+p.hubspot_owner_id+' date='+localDateStr(parseInt(sampleTs)||0));
-        }
+        totalScanned+=results.length;
 
         if(results.length===0) break;
 
-        // Normalize to same shape as v1 for downstream processing
-        results.forEach(r=>{
-          const ts=parseInt(r.properties?.hs_timestamp||0);
-          const ownerId=String(r.properties?.hubspot_owner_id||'');
-          // createdate is the reliable date field for both calls and meetings in v3
-          const tsRaw = r.properties?.createdate
-            || r.properties?.hs_meeting_start_time
-            || r.properties?.hs_timestamp;
-          const tsVal = tsRaw ? parseInt(tsRaw) : 0;
+        // Log sample from first page we read (newest)
+        if(page===1){
+          const s=results[results.length-1]; // last item = newest on this page
+          const sTs=s.engagement?.timestamp||s.engagement?.createdAt||0;
+          dbg('Newest engagement sample: type='+s.engagement?.type+' date='+localDateStr(sTs));
+        }
 
-          allEngagements.push({
-            _type: engType==='calls'?'CALL':'MEETING',
-            _ts: tsVal,
-            _ownerId: ownerId,
-            _id: r.id,
-            _associations: r.associations
-          });
-          typeTotal++;
+        let recentOnPage=0;
+        let allOlderThanWindow=true;
+
+        results.forEach(e=>{
+          const ts=e.engagement?.timestamp||e.engagement?.createdAt||0;
+          const type=(e.engagement?.type||'').toUpperCase();
+          if(ts>=afterTs){
+            allOlderThanWindow=false;
+            if(type==='CALL'||type==='MEETING'){
+              allEngagements.push({
+                _type:type,
+                _ts:ts,
+                _ownerId:String(e.engagement?.ownerId||''),
+                _id:String(e.engagement?.id||''),
+                _associations:e.associations
+              });
+              recentOnPage++;
+            }
+          }
         });
 
-        after=data.paging?.next?.after;
-        if(!after) break;
+        dbg('Page '+page+' (offset '+startOffset+'): scanned '+results.length+', recent calls/meetings: '+recentOnPage);
+
+        // Stop if entire page is older than our window
+        if(allOlderThanWindow){
+          consecutiveOldPages++;
+          if(consecutiveOldPages>=2){
+            dbg('Passed date boundary, stopping');
+            break;
+          }
+        } else {
+          consecutiveOldPages=0;
+        }
+
+        // Move to previous page (go backwards)
+        startOffset=startOffset-pageSize;
+        if(startOffset<0) break;
       }
-      dbg('Total '+engType+' fetched: '+typeTotal);
+      dbg('Done: scanned '+totalScanned+' engagements, found '+allEngagements.length+' calls/meetings in last 35 days');
     }
 
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
-      const sample=allEngagements.slice(0,5).map(e=>{
-        return e._type+' '+localDateStr(e._ts)+' owner:'+ownerMap[e._ownerId];
-      });
-      dbg('Sample (type date owner): '+sample.join(' | '));
+      const sample=allEngagements.slice(0,3).map(e=>e._type+' '+localDateStr(e._ts)+' '+ownerMap[e._ownerId]);
+      dbg('Sample: '+sample.join(' | '));
     } else {
-      dbg('WARNING: 0 calls/meetings found. Check scopes and HubSpot activity data.');
+      dbg('WARNING: 0 calls/meetings in last 35 days. Try increasing daysBack or check HubSpot data.');
     }
 
     // 3. Process engagements
