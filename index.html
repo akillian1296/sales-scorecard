@@ -222,7 +222,7 @@ input[type=text]:focus,input[type=password]:focus{outline:1px solid var(--accent
       <div class="settings-hdr">Sales reps (auto-populated from HubSpot owners)</div>
       <div class="settings-card" id="rep-settings"></div>
     </div>
-    <div class="hint-box">Rep names are pulled automatically from HubSpot. You can edit roles here. Names must match HubSpot owner display names exactly.</div>
+    <div class="hint-box">Reps are pulled automatically from HubSpot owners. Toggle Active/Inactive to control who appears on the scorecard. New reps pulled from HubSpot default to Inactive — toggle them on when they join the team.</div>
   </div>
 
   <!-- Setup -->
@@ -336,7 +336,15 @@ function toggleDebug(){
 }
 
 // ── Date helpers ──────────────────────────────────────────
-function todayStr(){return new Date().toISOString().slice(0,10)}
+// Use LOCAL date so 3pm EST doesn't become next day in UTC
+function localDateStr(ts){
+  const d=new Date(ts);
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+function todayStr(){return localDateStr(Date.now())}
 function weekDates(from){
   const d=new Date(from+'T12:00:00');
   const day=d.getDay()||7;
@@ -453,11 +461,19 @@ async function fetchHubSpot(){
     const ownerMap={};
     owners.forEach(o=>{ownerMap[o.id]=o.name;});
 
-    // Sync reps
-    if(state.reps.length===0){
-      state.reps=owners.map((o,i)=>({id:state.nextRepId++,name:o.name,role:'Sales Rep'}));
-      dbg(`Created ${state.reps.length} reps from owners`);
+    // Sync reps — add new owners, preserve existing active/inactive/role settings
+    const existingNames=new Set(state.reps.map(r=>r.name));
+    owners.forEach(o=>{
+      if(!existingNames.has(o.name)){
+        state.reps.push({id:state.nextRepId++,name:o.name,role:'Sales Rep',active:false});
+        dbg('New rep added (inactive by default): '+o.name);
+      }
+    });
+    if(state.reps.length>0 && state.reps.every(r=>r.active===undefined)){
+      // First run — mark all active
+      state.reps.forEach(r=>r.active=true);
     }
+    dbg('Reps: '+state.reps.map(r=>r.name+'('+(r.active?'active':'inactive')+')').join(', '));
 
     // 2. Fetch engagements using v1 API (works with sales-email-read + timeline scopes)
     const daysBack=35;
@@ -497,7 +513,16 @@ async function fetchHubSpot(){
       }
     }
 
-    dbg(`Total relevant engagements: ${allEngagements.length}`);
+    dbg('Total relevant engagements: '+allEngagements.length);
+    if(allEngagements.length>0){
+      const sample=allEngagements.slice(0,3).map(e=>{
+        const ts=e.engagement?.createdAt||0;
+        return (e.engagement?.type||'?')+' '+localDateStr(ts)+' owner:'+ownerMap[String(e.engagement?.ownerId||'')];
+      });
+      dbg('Sample engagements: '+sample.join(' | '));
+    } else {
+      dbg('WARNING: No engagements found. Check HubSpot has calls/meetings logged in last 35 days.');
+    }
 
     // 3. Process engagements
     state.logs={};
@@ -518,7 +543,7 @@ async function fetchHubSpot(){
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)return;
       const ts=e.engagement?.createdAt||0;
-      const isoDate=new Date(ts).toISOString().slice(0,10);
+      const isoDate=localDateStr(ts);
       const act=state.activities.find(a=>a.type==='calls');
       if(!act)return;
       if(!state.logs[ownerName])state.logs[ownerName]={};
@@ -535,7 +560,7 @@ async function fetchHubSpot(){
       const ownerName=ownerMap[ownerId]||'';
       if(!ownerName)continue;
       const ts=e.engagement?.createdAt||0;
-      const isoDate=new Date(ts).toISOString().slice(0,10);
+      const isoDate=localDateStr(ts);
       const contactIds=(e.associations?.contactIds||[]);
       const contactId=String(contactIds[0]||'');
 
@@ -623,7 +648,7 @@ function renderScores(){
   const month=monthDates(date);
   const mx=maxPossible();
 
-  const activeReps=state.reps.length>0?state.reps:[];
+  const activeReps=state.reps.filter(r=>r.active!==false);
 
   if(activeReps.length===0){
     document.getElementById('rep-grid').innerHTML=`
@@ -693,7 +718,16 @@ function renderSettings(){
 
   let rh='';
   state.reps.forEach(r=>{
-    rh+=`<div class="s-row"><input type="text" value="${r.name}" onchange="updRep(${r.id},'name',this.value)"><input type="text" value="${r.role}" onchange="updRep(${r.id},'role',this.value)" style="font-size:12px"><button class="del-btn" onclick="delRep(${r.id})">×</button></div>`;
+    const isActive=r.active!==false;
+    const toggleStyle=isActive
+      ?'background:rgba(200,240,96,0.15);color:#c8f060;border:1px solid rgba(200,240,96,0.3);'
+      :'background:var(--surface2);color:var(--text3);border:1px solid var(--border);';
+    rh+=`<div class="s-row" style="grid-template-columns:auto 1fr 90px 28px;gap:8px">
+      <button onclick="toggleRepActive(${r.id})" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;${toggleStyle}">${isActive?'Active':'Inactive'}</button>
+      <input type="text" value="${r.name}" onchange="updRep(${r.id},'name',this.value)">
+      <input type="text" value="${r.role}" onchange="updRep(${r.id},'role',this.value)" style="font-size:12px">
+      <button class="del-btn" onclick="delRep(${r.id})">×</button>
+    </div>`;
   });
   document.getElementById('rep-settings').innerHTML=rh+`<div class="add-row"><button class="btn btn-ghost" onclick="addRep()" style="font-size:12px;padding:5px 12px">+ Add rep</button></div>`;
 }
@@ -703,6 +737,7 @@ function updAct(id,f,v){const a=state.activities.find(x=>x.id===id);if(!a)return
 function delAct(id){state.activities=state.activities.filter(a=>a.id!==id);saveState();renderSettings();}
 function addAct(){state.activities.push({id:state.nextActId++,name:'New activity',pts:1,type:'custom'});saveState();renderSettings();}
 function updRep(id,f,v){const r=state.reps.find(x=>x.id===id);if(r){r[f]=v;}saveState();renderSettings();}
+function toggleRepActive(id){const r=state.reps.find(x=>x.id===id);if(r){r.active=r.active===false?true:false;}saveState();renderSettings();}
 function delRep(id){state.reps=state.reps.filter(r=>r.id!==id);saveState();renderSettings();}
 function addRep(){state.reps.push({id:state.nextRepId++,name:'New Rep',role:'Sales Rep'});saveState();renderSettings();}
 
