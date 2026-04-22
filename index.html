@@ -501,7 +501,8 @@ async function fetchHubSpot(){
             ]
           }],
           properties:['hs_timestamp','hubspot_owner_id','hs_engagement_type',
-                      'hs_activity_type','hs_call_status','hs_meeting_outcome'],
+                      'hs_activity_type','hs_call_status','hs_meeting_outcome',
+                      'hs_meeting_start_time','createdate','hs_lastmodifieddate'],
           sorts:[{propertyName:'hs_timestamp',direction:'DESCENDING'}],
           limit:100,
           ...(after?{after}:{})
@@ -518,15 +519,30 @@ async function fetchHubSpot(){
         const results=data.results||[];
         dbg(engType+' page '+page+': got '+results.length+' results');
 
+        if(page===1 && results.length>0){
+          const r0=results[0];
+          dbg(engType+' sample props: '+JSON.stringify(r0.properties).slice(0,300));
+        }
+
         if(results.length===0) break;
 
         // Normalize to same shape as v1 for downstream processing
         results.forEach(r=>{
           const ts=parseInt(r.properties?.hs_timestamp||0);
           const ownerId=String(r.properties?.hubspot_owner_id||'');
+          // v3 uses different property names depending on object type
+          // calls: hs_timestamp or createdate
+          // meetings: hs_timestamp or hs_meeting_start_time
+          const tsRaw = r.properties?.hs_timestamp
+            || r.properties?.hs_meeting_start_time
+            || r.properties?.hs_lastmodifieddate
+            || r.properties?.createdate
+            || null;
+          const tsVal = tsRaw ? parseInt(tsRaw) : 0;
+
           allEngagements.push({
             _type: engType==='calls'?'CALL':'MEETING',
-            _ts: ts,
+            _ts: tsVal,
             _ownerId: ownerId,
             _id: r.id,
             _associations: r.associations
