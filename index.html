@@ -252,6 +252,11 @@ input[type=text]:focus,input[type=password]:focus{outline:1px solid var(--accent
         <input type="text" id="hs-fleet-prop" placeholder="fleet_size" style="max-width:260px">
         <div class="hint-box">The internal name of your contact property for vehicle/fleet count. Found in HubSpot → Settings → Properties → Contact properties. Click the property and look for the internal name field.</div>
       </div>
+      <div class="field-group">
+        <div class="field-lbl">Fetch data from date</div>
+        <input type="date" id="hs-fetch-start" style="max-width:200px;font-family:'DM Mono',monospace;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;background:var(--surface2);color:var(--text)">
+        <div class="hint-box">Only fetch HubSpot data on or after this date. Default is January 1st of the current year. Set a more recent date to speed up the fetch — e.g. the start of the current quarter.</div>
+      </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
         <button class="btn btn-accent" onclick="saveAndConnect()">Save &amp; Connect</button>
@@ -286,7 +291,7 @@ const COLORS=[
   {bg:'rgba(96,240,200,0.15)',fg:'#60f0c8'},
 ];
 
-let cfg={token:'',portalId:'',fleetProp:'fleet_size'};
+let cfg={token:'',portalId:'',fleetProp:'fleet_size',fetchStart:''};
 let debugLines=[];
 
 let state={
@@ -479,9 +484,10 @@ async function fetchHubSpot(){
     dbg('Reps: '+state.reps.map(r=>r.name+'('+(r.active?'active':'inactive')+')').join(', '));
 
     // 2. Fetch engagements using v1 API (works with sales-email-read + timeline scopes)
-    const daysBack=35;
-    const afterTs=Date.now()-(daysBack*24*60*60*1000);
-    dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
+    // Use configurable fetch start date (default: Jan 1 of current year)
+    const fetchStart=cfg.fetchStart||new Date(new Date().getFullYear(),0,1).toISOString().slice(0,10);
+    const afterTs=new Date(fetchStart+'T00:00:00').getTime();
+    dbg('Fetching engagements since '+fetchStart+' ('+Math.round((Date.now()-afterTs)/86400000)+' days)');
 
     // Sequential approach with rate limit handling
     // Fires requests one at a time with delay to avoid 429s
@@ -713,6 +719,8 @@ function saveAndConnect(){
   cfg.token=token;
   cfg.portalId=portal;
   cfg.fleetProp=fleet||'fleet_size';
+  const fetchStartVal=document.getElementById('hs-fetch-start').value;
+  cfg.fetchStart=fetchStartVal||new Date(new Date().getFullYear(),0,1).toISOString().slice(0,10);
   saveState();
   document.getElementById('connect-status').textContent='Saved. Connecting…';
   fetchHubSpot().then(()=>{
@@ -840,6 +848,8 @@ function setView(v){
     if(cfg.token)document.getElementById('hs-token').value=cfg.token;
     if(cfg.portalId)document.getElementById('hs-portal').value=cfg.portalId;
     if(cfg.fleetProp)document.getElementById('hs-fleet-prop').value=cfg.fleetProp;
+    const defaultStart=new Date(new Date().getFullYear(),0,1).toISOString().slice(0,10);
+    document.getElementById('hs-fetch-start').value=cfg.fetchStart||defaultStart;
   }
 }
 
