@@ -483,105 +483,126 @@ async function fetchHubSpot(){
     const afterTs=Date.now()-(daysBack*24*60*60*1000);
     dbg(`Fetching engagements since ${new Date(afterTs).toISOString().slice(0,10)}`);
 
-    // Approach: fetch contacts recently modified, then get their engagements
-    // Uses only crm.objects.contacts.read — no calls/meetings scope needed
+    // Sequential approach with rate limit handling
+    // Fires requests one at a time with delay to avoid 429s
     let allEngagements=[];
 
-    // Build owner id -> name map for active reps only
+    // Helper: sleep ms
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+    // Helper: fetch with retry on 429
+    async function hsGetSafe(path,params={},retries=3){
+      for(let i=0;i<retries;i++){
+        try{
+          return await hsGet(path,params);
+        }catch(e){
+          if(e.message.includes('429')&&i<retries-1){
+            const wait=1200*(i+1);
+            dbg('Rate limit hit, waiting '+wait+'ms...');
+            await sleep(wait);
+          } else { throw e; }
+        }
+      }
+    }
+    async function hsPostSafe(path,body,retries=3){
+      for(let i=0;i<retries;i++){
+        try{
+          return await hsPost(path,body);
+        }catch(e){
+          if(e.message.includes('429')&&i<retries-1){
+            const wait=1200*(i+1);
+            dbg('Rate limit hit, waiting '+wait+'ms...');
+            await sleep(wait);
+          } else { throw e; }
+        }
+      }
+    }
+
+    // Build active owner list
     const activeRepNames=new Set(state.reps.filter(r=>r.active!==false).map(r=>r.name));
     const activeOwnerIds=Object.entries(ownerMap)
       .filter(([id,name])=>activeRepNames.has(name))
       .map(([id])=>id);
 
-    dbg('Active owner IDs: '+activeOwnerIds.join(', '));
+    dbg('Fetching data for '+activeOwnerIds.length+' active reps...');
 
-    if(activeOwnerIds.length===0){
-      dbg('No active reps — go to Settings to mark reps as active');
-    } else {
-      // For each active owner, fetch their recently modified contacts
-      for(const ownerId of activeOwnerIds){
-        const ownerName=ownerMap[ownerId];
-        dbg('Fetching contacts for '+ownerName+'...');
+    // Seen engagement IDs to avoid duplicates across contacts
+    const seenEngIds=new Set();
 
-        let contactIds=[];
-        let after=undefined;
-        let contactPage=0;
+    for(const ownerId of activeOwnerIds){
+      const ownerName=ownerMap[ownerId];
+      dbg('--- '+ownerName+' ---');
 
-        while(contactPage<10){
-          contactPage++;
-          const body={
-            filterGroups:[{
-              filters:[
-                {propertyName:'hubspot_owner_id',operator:'EQ',value:ownerId},
-                {propertyName:'lastmodifieddate',operator:'GTE',value:String(afterTs)}
-              ]
-            }],
-            properties:['hubspot_owner_id','lastmodifieddate'],
-            sorts:[{propertyName:'lastmodifieddate',direction:'DESCENDING'}],
-            limit:100
-          };
-          if(after) body.after=after;
-
-          let data;
-          try{
-            data=await hsPost('/crm/v3/objects/contacts/search',body);
-          }catch(err){
-            dbg('Contact search error for '+ownerName+': '+err.message);
-            break;
-          }
-
-          const results=data.results||[];
-          contactIds=contactIds.concat(results.map(r=>r.id));
-          after=data.paging?.next?.after;
-          if(!after||results.length===0) break;
-        }
-
-        dbg(ownerName+': found '+contactIds.length+' recently modified contacts');
-        if(contactIds.length===0) continue;
-
-        // For each contact, fetch their engagements via associations
-        // Batch in groups of 10 to avoid rate limits
-        const batchSize=10;
-        for(let i=0;i<contactIds.length;i+=batchSize){
-          const batch=contactIds.slice(i,i+batchSize);
-
-          await Promise.all(batch.map(async contactId=>{
-            try{
-              // Get engagements associated with this contact
-              const engData=await hsGet(
-                '/crm/v4/objects/contacts/'+contactId+'/associations/engagements',
-                {limit:100}
-              );
-              const engIds=(engData.results||[]).map(r=>r.toObjectId);
-              if(engIds.length===0) return;
-
-              // Fetch each engagement detail
-              await Promise.all(engIds.slice(0,20).map(async engId=>{
-                try{
-                  const eng=await hsGet('/engagements/v1/engagements/'+engId);
-                  const ts=eng.engagement?.timestamp||eng.engagement?.createdAt||0;
-                  const type=(eng.engagement?.type||'').toUpperCase();
-                  if(ts>=afterTs && (type==='CALL'||type==='MEETING')){
-                    allEngagements.push({
-                      _type:type,
-                      _ts:ts,
-                      _ownerId:String(eng.engagement?.ownerId||ownerId),
-                      _id:String(eng.engagement?.id||engId),
-                      _associations:eng.associations,
-                      _contactId:contactId
-                    });
-                  }
-                }catch(e){ /* skip individual engagement errors */ }
-              }));
-            }catch(e){
-              dbg('Association fetch error for contact '+contactId+': '+e.message);
-            }
-          }));
-        }
-        dbg(ownerName+': total engagements found so far: '+allEngagements.length);
+      // Step 1: get recently modified contacts for this rep
+      let contactIds=[];
+      let after=undefined;
+      let contactPage=0;
+      while(contactPage<10){
+        contactPage++;
+        const body={
+          filterGroups:[{filters:[
+            {propertyName:'hubspot_owner_id',operator:'EQ',value:ownerId},
+            {propertyName:'lastmodifieddate',operator:'GTE',value:String(afterTs)}
+          ]}],
+          properties:['hs_object_id'],
+          sorts:[{propertyName:'lastmodifieddate',direction:'DESCENDING'}],
+          limit:100
+        };
+        if(after) body.after=after;
+        let data;
+        try{ data=await hsPostSafe('/crm/v3/objects/contacts/search',body); }
+        catch(e){ dbg('Contact search error: '+e.message); break; }
+        const results=data.results||[];
+        contactIds=contactIds.concat(results.map(r=>r.id));
+        after=data.paging?.next?.after;
+        if(!after||results.length===0) break;
+        await sleep(150);
       }
+      dbg(ownerName+': '+contactIds.length+' contacts modified in last 35 days');
+      if(contactIds.length===0) continue;
+
+      // Step 2: for each contact, get associated engagement IDs
+      const engIdSet=new Set();
+      for(const contactId of contactIds){
+        try{
+          const assocData=await hsGetSafe(
+            '/crm/v4/objects/contacts/'+contactId+'/associations/engagements',
+            {limit:100}
+          );
+          (assocData.results||[]).forEach(r=>{
+            if(r.toObjectId) engIdSet.add(String(r.toObjectId));
+          });
+        }catch(e){ /* skip */ }
+        await sleep(120);
+      }
+      dbg(ownerName+': '+engIdSet.size+' associated engagement IDs found');
+
+      // Step 3: fetch each engagement detail sequentially
+      let repEngCount=0;
+      for(const engId of engIdSet){
+        if(seenEngIds.has(engId)) continue;
+        seenEngIds.add(engId);
+        try{
+          const eng=await hsGetSafe('/engagements/v1/engagements/'+engId);
+          const ts=eng.engagement?.timestamp||eng.engagement?.createdAt||0;
+          const type=(eng.engagement?.type||'').toUpperCase();
+          if(ts>=afterTs&&(type==='CALL'||type==='MEETING')){
+            // Use actual owner from engagement, fall back to contact owner
+            const engOwnerId=String(eng.engagement?.ownerId||ownerId);
+            const contactIds2=(eng.associations?.contactIds||[]);
+            allEngagements.push({
+              _type:type,_ts:ts,_ownerId:engOwnerId,
+              _id:engId,_associations:eng.associations,
+              _contactId:String(contactIds2[0]||'')
+            });
+            repEngCount++;
+          }
+        }catch(e){ /* skip */ }
+        await sleep(120);
+      }
+      dbg(ownerName+': '+repEngCount+' calls/meetings in last 35 days');
     }
-    dbg('Fetch complete: '+allEngagements.length+' total calls/meetings in last 35 days');
+    dbg('Complete: '+allEngagements.length+' total calls/meetings found');
 
     dbg('Total relevant engagements: '+allEngagements.length);
     if(allEngagements.length>0){
