@@ -513,29 +513,62 @@ async function syncNow(){
   setStatus('syncing','Syncing...');
   document.getElementById('sync-btn').disabled=true;
   const debugBox=document.getElementById('debug-box');
+  debugBox.textContent='Starting sync...';
+  debugBox.classList.add('show');
 
   try{
+    // Kick off background sync — returns immediately
     const headers={'Content-Type':'application/json'};
     if(cfg.syncSecret) headers['X-Sync-Secret']=cfg.syncSecret;
     const res=await fetch(cfg.workerUrl+'/sync',{method:'POST',headers});
     const result=await res.json();
-
     if(result.error) throw new Error(result.error);
 
-    // Show log in debug box
-    if(result.log){
-      debugBox.textContent=result.log.join('\n');
-      debugBox.classList.add('show');
-    }
+    debugBox.textContent='Sync running in background...\nChecking for completion every 15 seconds...';
+    toast('Sync started — checking for completion...');
 
-    // Now reload the fresh data
-    await loadData();
-    toast('Sync complete ✓');
+    // Poll /status every 15s until done
+    let attempts=0;
+    const maxAttempts=30; // 7.5 min max
+    const pollId=setInterval(async()=>{
+      attempts++;
+      try{
+        const sRes=await fetch(cfg.workerUrl+'/status');
+        const sData=await sRes.json();
+        const s=sData.sync||{};
+        const elapsed=Math.round(attempts*15/60*10)/10;
+
+        if(s.status==='complete'){
+          clearInterval(pollId);
+          debugBox.textContent='Sync complete at '+s.completedAt+'\nLoading scores...';
+          await loadData();
+          toast('Sync complete \u2713');
+          document.getElementById('sync-btn').disabled=false;
+        } else if(s.status==='error'){
+          clearInterval(pollId);
+          debugBox.textContent='Sync failed: '+(s.error||'Unknown error');
+          setStatus('error','Sync failed');
+          showErr('Sync error: '+s.error);
+          document.getElementById('sync-btn').disabled=false;
+        } else {
+          debugBox.textContent='Sync running... ('+elapsed+' min elapsed)\nStarted: '+(s.startedAt||'unknown');
+          setStatus('syncing','Syncing... '+elapsed+'m');
+        }
+
+        if(attempts>=maxAttempts){
+          clearInterval(pollId);
+          debugBox.textContent='Taking longer than expected.\nTry refreshing and clicking Sync now again.';
+          document.getElementById('sync-btn').disabled=false;
+        }
+      }catch(e){
+        debugBox.textContent+='\nPoll error: '+e.message;
+      }
+    },15000);
+
   }catch(err){
     setStatus('error','Sync failed');
     showErr('Sync error: '+err.message);
-    if(err.message) debugBox.textContent+='\nERROR: '+err.message;
-  }finally{
+    debugBox.textContent='ERROR: '+err.message;
     document.getElementById('sync-btn').disabled=false;
   }
 }
