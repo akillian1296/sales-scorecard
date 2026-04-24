@@ -6,311 +6,148 @@
 <title>Sales Scorecard</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:#0c0c0b;
-  --surface:#161615;
-  --surface2:#1e1e1c;
-  --surface3:#262624;
-  --border:rgba(255,255,255,0.06);
-  --border2:rgba(255,255,255,0.11);
-  --text:#eeecea;
-  --text2:#9a9890;
-  --text3:#585654;
-  --accent:#c8f060;
-  --accent2:#8aaa30;
-  --blue:#60a8f0;
-  --red:#f06060;
-  --red-bg:rgba(240,96,96,0.08);
-  --amber:#f0b860;
-  --amber-bg:rgba(240,184,96,0.08);
-  --green:#60f0a8;
-  --radius:10px;
-  --radius-lg:14px;
-  --radius-xl:20px;
+  --bg:#0c0c0b;--surface:#161615;--surface2:#1e1e1c;--surface3:#262624;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#eeecea;--text2:#9a9890;--text3:#585654;
+  --accent:#c8f060;--blue:#60a8f0;--red:#f06060;--red-bg:rgba(240,96,96,0.08);
+  --amber:#f0b860;--green:#60f0a8;--radius:10px;--radius-lg:14px;--radius-xl:20px;
 }
-
-body{
-  font-family:'Syne',system-ui,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  font-size:14px;
-  line-height:1.5;
-}
-
-/* subtle grid background */
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size:48px 48px;
-  pointer-events:none;
-  z-index:0;
-}
-
+body{font-family:'Syne',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
 .shell{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 4rem;position:relative;z-index:1}
-
-/* ── Header ── */
-header{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;
-  padding-bottom:1.5rem;border-bottom:1px solid var(--border);
-}
+header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
 .logo{display:flex;align-items:center;gap:14px}
-.logo-mark{
-  width:44px;height:44px;background:var(--accent);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'DM Mono',monospace;color:#0c0c0b;font-size:14px;font-weight:500;flex-shrink:0;
-  box-shadow:0 0 20px rgba(200,240,96,0.2);
-}
+.logo-mark{width:44px;height:44px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;color:#0c0c0b;font-size:14px;font-weight:500;flex-shrink:0;box-shadow:0 0 20px rgba(200,240,96,0.2)}
 .logo-text h1{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px}
 .logo-text p{font-size:12px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
 .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-
-/* ── Status ── */
-.status-pill{
-  display:flex;align-items:center;gap:7px;padding:5px 13px;
-  border-radius:20px;font-size:11px;font-weight:500;
-  border:1px solid var(--border2);color:var(--text3);
-  font-family:'DM Mono',monospace;transition:all .3s;
-}
-.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:all .3s}
-.status-pill.live .status-dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
-.status-pill.live{color:var(--accent);border-color:rgba(200,240,96,0.2)}
-.status-pill.syncing .status-dot{background:var(--amber);animation:pulse 1s infinite}
-.status-pill.syncing{color:var(--amber);border-color:rgba(240,184,96,0.2)}
-.status-pill.error .status-dot{background:var(--red)}
-.status-pill.error{color:var(--red);border-color:rgba(240,96,96,0.2)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ── Tabs ── */
 .tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:3px}
-.tab{
-  padding:6px 16px;font-size:12px;font-weight:600;border:none;
-  background:transparent;border-radius:8px;cursor:pointer;
-  color:var(--text3);font-family:'Syne',sans-serif;
-  transition:all .15s;letter-spacing:.02em;
-}
+.tab{padding:6px 16px;font-size:12px;font-weight:600;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--text3);font-family:'Syne',sans-serif;transition:all .15s;letter-spacing:.02em}
 .tab:hover{color:var(--text2)}
 .tab.active{background:var(--surface3);color:var(--text);border:1px solid var(--border2)}
-
-/* ── Buttons ── */
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 16px;font-size:12px;font-weight:600;
-  font-family:'Syne',sans-serif;border-radius:var(--radius);
-  cursor:pointer;transition:all .15s;border:none;letter-spacing:.02em;
-}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;border-radius:var(--radius);cursor:pointer;transition:all .15s;border:none;letter-spacing:.02em}
 .btn-accent{background:var(--accent);color:#0c0c0b}
 .btn-accent:hover{background:#d4f570;box-shadow:0 0 16px rgba(200,240,96,0.3)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
-.btn:disabled{opacity:.3;cursor:not-allowed}
-
-/* ── Summary strip ── */
+.btn-sm{padding:5px 12px;font-size:11px}
 .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
-.sum-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:16px 18px;
-  transition:border-color .2s;
-}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
 .sum-card:first-child{border-color:rgba(200,240,96,0.15)}
 .sum-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-weight:600}
 .sum-val{font-size:26px;font-weight:800;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:-.5px}
 .sum-val.accent{color:var(--accent)}
 .sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
-
-/* ── Controls ── */
 .ctrl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
 .ctrl-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600}
-input[type=date]{
-  font-size:12px;font-family:'DM Mono',monospace;
-  border:1px solid var(--border2);border-radius:var(--radius);
-  padding:6px 10px;background:var(--surface2);color:var(--text);cursor:pointer;
-}
+input[type=date]{font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;background:var(--surface2);color:var(--text);cursor:pointer}
 input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
-
-/* ── Rep cards ── */
 .rep-grid{display:grid;gap:10px}
-.rep-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-xl);padding:20px 22px;
-  transition:all .2s;position:relative;overflow:hidden;
-}
-.rep-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:transparent;transition:background .2s;
-}
+.rep-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px 22px;transition:all .2s;position:relative;overflow:hidden}
+.rep-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:transparent;transition:background .2s}
 .rep-card:hover{border-color:var(--border2)}
-.rep-card:hover::before{background:linear-gradient(90deg,transparent,rgba(200,240,96,0.2),transparent)}
 .rep-card.rank-1{border-color:rgba(200,240,96,0.18)}
 .rep-card.rank-1::before{background:linear-gradient(90deg,transparent,rgba(200,240,96,0.25),transparent)}
-
 .rep-header{display:flex;align-items:center;gap:13px;margin-bottom:16px}
-.avatar{
-  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;
-  font-family:'DM Mono',monospace;
-}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;font-family:'DM Mono',monospace}
 .rep-info{flex:1}
 .rep-name{font-size:15px;font-weight:700;color:var(--text)}
 .rep-role{font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace}
-
 .rank-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace}
 .rb-1{background:rgba(200,240,96,0.12);color:var(--accent);border:1px solid rgba(200,240,96,0.2)}
 .rb-2{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border2)}
 .rb-3{background:rgba(240,184,96,0.1);color:var(--amber);border:1px solid rgba(240,184,96,0.2)}
-
 .trend-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace}
 .t-up{background:rgba(200,240,96,0.1);color:var(--accent)}
 .t-down{background:var(--red-bg);color:var(--red)}
 .t-flat{background:var(--surface2);color:var(--text3)}
-
 .scores-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .score-cell{background:var(--surface2);border-radius:9px;padding:11px 13px;border:1px solid var(--border)}
 .score-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:600}
 .score-num{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);letter-spacing:-.5px}
 .score-num.today{color:var(--accent)}
-
 .bar-row{display:flex;align-items:center;gap:10px}
 .bar-bg{flex:1;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 .bar-pct{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;min-width:30px;text-align:right}
+.raw-row{display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap}
+.raw-item{font-size:11px;color:var(--text3)}
+.raw-item strong{color:var(--text2)}
 
-/* ── Settings ── */
+/* Import view */
+.import-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;margin-bottom:14px}
+.import-card h2{font-size:17px;font-weight:700;margin-bottom:6px}
+.import-card p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+.steps{list-style:none}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
+.steps li:last-child{border-bottom:none}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0c0c0b;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-t{font-size:13px;color:var(--text2);line-height:1.6}
+.step-t strong{color:var(--text)}
+.step-t code{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace;color:var(--accent);font-size:11px}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative;margin-top:20px}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(200,240,96,0.04)}
+.drop-icon{font-size:30px;margin-bottom:10px;opacity:.4}
+.drop-label{font-size:14px;font-weight:600;color:var(--text2)}
+.drop-sub{font-size:12px;color:var(--text3);margin-top:4px}
+#csv-file{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.hint-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.7;margin-top:10px}
+.hint-box code{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace;color:var(--accent);font-size:11px}
+.col-map{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-top:12px;display:none}
+.col-map.show{display:block}
+.col-map-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:12px}
+.col-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.col-map-row{display:flex;align-items:center;gap:8px}
+.col-map-lbl{font-size:12px;color:var(--text3);width:140px;flex-shrink:0}
+.col-map-row select{flex:1;font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:7px;padding:5px 8px;background:var(--surface3);color:var(--text)}
+.preview-box{background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:10px;display:none;max-height:80px;overflow:hidden}
+.preview-box.show{display:block}
+.import-actions{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.import-status{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+
+/* Settings */
 .settings-section{margin-bottom:1.5rem}
 .settings-hdr{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:8px}
 .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
-.s-row{
-  display:grid;grid-template-columns:auto 1fr 100px 28px;
-  gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);
-}
+.s-row{display:grid;grid-template-columns:auto 1fr 90px 28px;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
 .s-row:last-child{border-bottom:none}
-.s-row input[type=text]{
-  font-size:13px;font-family:'Syne',sans-serif;
-  border:1px solid var(--border);border-radius:7px;
-  padding:5px 9px;background:var(--surface2);color:var(--text);width:100%;
-}
-.toggle-btn{
-  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
-  cursor:pointer;font-family:'DM Mono',monospace;border:none;transition:all .15s;
-}
-.toggle-active{background:rgba(200,240,96,0.12);color:var(--accent);border:1px solid rgba(200,240,96,0.25)}
-.toggle-inactive{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
-.save-row{padding:10px 14px;border-top:1px solid var(--border);background:var(--surface2);display:flex;gap:8px;align-items:center}
-
-/* ── Setup ── */
-.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;margin-bottom:14px}
-.setup-card h2{font-size:17px;font-weight:700;margin-bottom:6px}
-.setup-card p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px}
-.field-group{margin-bottom:16px}
-.field-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
-input[type=text],input[type=password]{
-  font-size:13px;font-family:'DM Mono',monospace;
-  border:1px solid var(--border2);border-radius:var(--radius);
-  padding:9px 13px;background:var(--surface2);color:var(--text);width:100%;
-}
-input[type=text]:focus,input[type=password]:focus{outline:1px solid var(--accent);outline-offset:1px}
-.hint-box{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--radius);padding:12px 14px;
-  font-size:12px;color:var(--text2);line-height:1.7;margin-top:8px;
-}
-.hint-box code{
-  background:var(--surface3);border:1px solid var(--border2);
-  border-radius:4px;padding:1px 6px;
-  font-family:'DM Mono',monospace;color:var(--accent);font-size:11px;
-}
-.steps{list-style:none;margin:12px 0}
-.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
-.steps li:last-child{border-bottom:none}
-.step-n{
-  width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0c0c0b;
-  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;margin-top:1px;
-}
-.step-t{font-size:13px;color:var(--text2);line-height:1.6}
-.step-t strong{color:var(--text)}
-
-/* ── Error banner ── */
-.err-banner{
-  background:var(--red-bg);border:1px solid rgba(240,96,96,0.2);
-  border-radius:var(--radius);padding:12px 16px;
-  font-size:13px;color:var(--red);margin-bottom:1rem;display:none;
-}
-.err-banner.show{display:block}
-
-/* ── Empty state ── */
+.s-row input[type=text]{font-size:13px;font-family:'Syne',sans-serif;border:1px solid var(--border);border-radius:7px;padding:5px 9px;background:var(--surface2);color:var(--text);width:100%}
+.s-row input[type=number]{font-size:13px;font-family:'DM Mono',monospace;border:1px solid var(--border);border-radius:7px;padding:5px 7px;text-align:center;background:var(--surface2);color:var(--text);width:100%}
+.toggle-btn{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;border:none;transition:all .15s}
+.t-on{background:rgba(200,240,96,0.12);color:var(--accent);border:1px solid rgba(200,240,96,0.25)}
+.t-off{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.del-btn{width:28px;height:28px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:6px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.del-btn:hover{background:var(--red-bg);color:var(--red)}
+.add-row{padding:10px 14px;border-top:1px solid var(--border);background:var(--surface2)}
 .empty-state{text-align:center;padding:4rem 1rem;color:var(--text3)}
 .empty-state .icon{font-size:36px;margin-bottom:14px;opacity:.3}
 .empty-state p{font-size:13px;line-height:1.8;color:var(--text3)}
 .empty-state strong{color:var(--text2)}
-
-/* ── Toast ── */
-.toast{
-  position:fixed;bottom:1.5rem;right:1.5rem;
-  background:var(--surface3);border:1px solid var(--border2);
-  color:var(--text);padding:10px 18px;border-radius:var(--radius);
-  font-size:13px;font-weight:500;opacity:0;pointer-events:none;
-  transition:opacity .25s;z-index:999;
-  box-shadow:0 4px 20px rgba(0,0,0,.4);
-}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 .toast.show{opacity:1}
-
-/* ── Debug ── */
-.debug-box{
-  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
-  padding:12px 14px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;
-  line-height:1.8;margin-top:12px;display:none;max-height:300px;overflow-y:auto;
-  white-space:pre-wrap;word-break:break-all;
-}
-.debug-box.show{display:block}
-
-.last-upd{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
-
-@media(max-width:640px){
-  .summary-strip{grid-template-columns:repeat(2,1fr)}
-  .scores-row{grid-template-columns:repeat(2,1fr)}
-  .tabs{flex-wrap:wrap}
-  .s-row{grid-template-columns:auto 1fr 28px}
-}
+@media(max-width:640px){.summary-strip{grid-template-columns:repeat(2,1fr)}.scores-row{grid-template-columns:repeat(2,1fr)}.tabs{flex-wrap:wrap}.col-map-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="shell">
-
   <header>
     <div class="logo">
       <div class="logo-mark">SS</div>
-      <div class="logo-text">
-        <h1>Sales Scorecard</h1>
-        <p>Powered by HubSpot</p>
-      </div>
+      <div class="logo-text"><h1>Sales Scorecard</h1><p>HubSpot CSV Import</p></div>
     </div>
     <div class="header-right">
-      <div class="status-pill" id="status-pill">
-        <div class="status-dot"></div>
-        <span id="status-text">Loading...</span>
-      </div>
-      <span class="last-upd" id="last-upd"></span>
-      <button class="btn btn-ghost" onclick="syncNow()" id="sync-btn">↻ Sync now</button>
       <div class="tabs">
         <button class="tab active" onclick="setView('scores')">Scores</button>
+        <button class="tab" onclick="setView('import')">Import</button>
         <button class="tab" onclick="setView('settings')">Settings</button>
-        <button class="tab" onclick="setView('setup')">Setup</button>
       </div>
     </div>
   </header>
 
   <!-- Scores -->
   <div id="view-scores">
-    <div class="err-banner" id="err-banner"></div>
     <div class="summary-strip" id="summary-strip">
       <div class="sum-card"><div class="sum-lbl">Team today</div><div class="sum-val">—</div></div>
       <div class="sum-card"><div class="sum-lbl">Top performer</div><div class="sum-val" style="font-size:18px">—</div></div>
@@ -323,127 +160,132 @@ input[type=text]:focus,input[type=password]:focus{outline:1px solid var(--accent
     </div>
     <div class="rep-grid" id="rep-grid">
       <div class="empty-state">
-        <div class="icon">⚡</div>
-        <p>Complete the <strong>Setup</strong> tab to connect your Worker,<br>then click <strong>Sync now</strong> to load your team's scores.</p>
+        <div class="icon">📥</div>
+        <p>No data yet. Go to the <strong>Import</strong> tab<br>to upload your HubSpot CSV export.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- Import -->
+  <div id="view-import" style="display:none">
+    <div class="import-card">
+      <h2>Import from HubSpot</h2>
+      <p>Export your activity data from HubSpot and drop it below. All processing happens in your browser — no data is sent anywhere.</p>
+      <ol class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-t">In HubSpot go to <strong>Reports → Activities</strong> or use <strong>Sales → Sales Activity Report</strong>.</div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-t">Filter by your desired date range. Make sure these columns are included: <code>Activity assigned to</code>, <code>Activity date</code>, <code>Activity type</code>, and your fleet size property (e.g. <code>Number of vehicles</code>).</div>
+        </li>
+        <li>
+          <div class="step-n">3</div>
+          <div class="step-t">Click <strong>Export → CSV</strong> and save the file.</div>
+        </li>
+        <li>
+          <div class="step-n">4</div>
+          <div class="step-t">Drop the CSV below. Map your columns, then click <strong>Import</strong>. Scores update instantly.</div>
+        </li>
+      </ol>
+
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="csv-file" accept=".csv" onchange="handleFile(this.files[0])">
+        <div class="drop-icon">📄</div>
+        <div class="drop-label">Drop CSV here or click to browse</div>
+        <div class="drop-sub">Exported from HubSpot · .csv files only</div>
+      </div>
+
+      <div class="hint-box">
+        <strong>Tip:</strong> You can also paste CSV text directly. Just copy from HubSpot's export and paste into the text area below.<br>
+        <textarea id="csv-paste" placeholder="Or paste CSV content here..." style="width:100%;height:80px;margin-top:8px;font-size:11px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:7px;padding:8px;background:var(--surface3);color:var(--text);resize:vertical"></textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="parsePaste()">Parse pasted text</button>
+      </div>
+
+      <div class="col-map" id="col-map">
+        <div class="col-map-title">Map your columns</div>
+        <div class="col-map-grid" id="col-map-grid"></div>
+        <div class="preview-box" id="preview-box"></div>
+        <div class="import-actions">
+          <button class="btn btn-accent" onclick="doImport()">Import data</button>
+          <button class="btn btn-ghost" onclick="clearData()">Clear all data</button>
+          <span class="import-status" id="import-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="import-card">
+      <h2 style="margin-bottom:10px">What gets imported</h2>
+      <div style="display:grid;gap:8px" id="scoring-display"></div>
+      <div class="hint-box" style="margin-top:10px">Scoring rules can be edited in the <strong>Settings</strong> tab. Changes apply immediately to all imported data.</div>
     </div>
   </div>
 
   <!-- Settings -->
   <div id="view-settings" style="display:none">
     <div class="settings-section">
-      <div class="settings-hdr">Sales reps — toggle active/inactive</div>
+      <div class="settings-hdr">Activity scoring rules</div>
+      <div class="settings-card" id="act-settings"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-hdr">Sales reps</div>
       <div class="settings-card" id="rep-settings"></div>
     </div>
-    <div class="hint-box">Changes are saved to your Worker's KV store so all team members see the same rep list. Click <strong>Save rep settings</strong> after making changes.</div>
   </div>
-
-  <!-- Setup -->
-  <div id="view-setup" style="display:none">
-    <div class="setup-card">
-      <h2>Connect your Cloudflare Worker</h2>
-      <p>The scorecard reads pre-calculated scores from your Cloudflare Worker. Follow these steps to get everything connected.</p>
-
-      <ol class="steps">
-        <li>
-          <div class="step-n">1</div>
-          <div class="step-t"><strong>Deploy the Worker</strong> — upload <code>worker.js</code> to a new Cloudflare Worker (same process as your proxy worker).</div>
-        </li>
-        <li>
-          <div class="step-n">2</div>
-          <div class="step-t"><strong>Create a KV namespace</strong> — in your Worker settings, go to <strong>Settings → KV Namespace Bindings</strong>, create a namespace called <code>SCORECARD_KV</code> and bind it with variable name <code>SCORECARD_KV</code>.</div>
-        </li>
-        <li>
-          <div class="step-n">3</div>
-          <div class="step-t"><strong>Add environment variables</strong> — in <strong>Settings → Variables</strong>, add: <code>HUBSPOT_TOKEN</code> (your token), <code>FLEET_PROP</code> (e.g. <code>vehicle_count__contact_level_</code>), <code>ALLOWED_ORIGIN</code> (your GitHub Pages URL), and optionally <code>SYNC_SECRET</code> (any password to protect manual syncs).</div>
-        </li>
-        <li>
-          <div class="step-n">4</div>
-          <div class="step-t"><strong>Add a cron trigger</strong> — in <strong>Settings → Triggers → Cron Triggers</strong>, add <code>0 11 * * *</code> to sync every morning at 7am ET.</div>
-        </li>
-        <li>
-          <div class="step-n">5</div>
-          <div class="step-t"><strong>Enter your Worker URL below</strong> and click Save. Then click <strong>Sync now</strong> to run the first fetch.</div>
-        </li>
-      </ol>
-
-      <div class="field-group">
-        <div class="field-lbl">Worker URL</div>
-        <input type="text" id="cfg-worker-url" placeholder="https://your-worker.your-name.workers.dev">
-        <div class="hint-box">Your Cloudflare Worker URL — found on the Worker's overview page. Do not include a trailing slash.</div>
-      </div>
-      <div class="field-group">
-        <div class="field-lbl">Sync secret (optional)</div>
-        <input type="password" id="cfg-sync-secret" placeholder="Leave blank if you didn't set SYNC_SECRET">
-        <div class="hint-box">If you set a <code>SYNC_SECRET</code> environment variable on your Worker, enter the same value here to authorize manual syncs.</div>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
-        <button class="btn btn-accent" onclick="saveSetup()">Save settings</button>
-        <button class="btn btn-ghost" onclick="toggleDebug()">Show sync log</button>
-        <span id="setup-status" style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace"></span>
-      </div>
-      <div class="debug-box" id="debug-box"></div>
-    </div>
-
-    <div class="setup-card">
-      <h2 style="margin-bottom:10px">Scoring rules</h2>
-      <div style="display:grid;gap:8px" id="scoring-rules"></div>
-      <div class="hint-box" style="margin-top:12px">To change scoring rules, edit the <code>SCORING</code> object at the top of <code>worker.js</code> and redeploy.</div>
-    </div>
-  </div>
-
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Config ────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────
 const COLORS=[
-  {bg:'rgba(200,240,96,0.12)',fg:'#c8f060'},
-  {bg:'rgba(96,168,240,0.12)',fg:'#60a8f0'},
-  {bg:'rgba(240,184,96,0.12)',fg:'#f0b860'},
-  {bg:'rgba(240,96,160,0.12)',fg:'#f060a0'},
-  {bg:'rgba(160,96,240,0.12)',fg:'#a060f0'},
-  {bg:'rgba(96,240,180,0.12)',fg:'#60f0b4'},
+  {bg:'rgba(200,240,96,0.12)',fg:'#c8f060'},{bg:'rgba(96,168,240,0.12)',fg:'#60a8f0'},
+  {bg:'rgba(240,184,96,0.12)',fg:'#f0b860'},{bg:'rgba(240,96,160,0.12)',fg:'#f060a0'},
+  {bg:'rgba(160,96,240,0.12)',fg:'#a060f0'},{bg:'rgba(96,240,180,0.12)',fg:'#60f0b4'},
 ];
 
-let cfg={workerUrl:'',syncSecret:''};
-let data=null; // cached scorecard data from Worker
+let state={
+  activities:[
+    {id:1,name:'Meeting (10+ vehicles)',pts:1.0,type:'meeting_large'},
+    {id:2,name:'Meeting (<10 vehicles)',pts:0.5,type:'meeting_small'},
+    {id:3,name:'Calls (per 25)',pts:1.0,type:'calls',per:25},
+    {id:4,name:'Second meeting',pts:0.5,type:'second_meeting'},
+  ],
+  reps:[],
+  logs:{}, // repName -> date -> {meeting_large,meeting_small,calls,second_meeting}
+  nextActId:10,
+  nextRepId:10,
+  fleetThreshold:10,
+};
 
-// ── Persistence ───────────────────────────────────────────
-function saveCfg(){
-  try{localStorage.setItem('ss_cfg2',JSON.stringify(cfg));}catch(e){}
+// ── Persist ───────────────────────────────────────────────
+function save(){
+  try{localStorage.setItem('ss_v3',JSON.stringify(state));}catch(e){}
 }
-function loadCfg(){
+function load(){
   try{
-    const c=localStorage.getItem('ss_cfg2');
-    if(c) Object.assign(cfg,JSON.parse(c));
+    const s=localStorage.getItem('ss_v3');
+    if(s) Object.assign(state,JSON.parse(s));
   }catch(e){}
 }
 
 // ── Date helpers ──────────────────────────────────────────
-function todayStr(){
-  const d=new Date();
-  return d.getFullYear()+'-'+
-    String(d.getMonth()+1).padStart(2,'0')+'-'+
-    String(d.getDate()).padStart(2,'0');
+function localDateStr(ts){
+  const d=new Date(ts);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+function todayStr(){return localDateStr(Date.now())}
 function weekDates(from){
   const d=new Date(from+'T12:00:00');
   const day=d.getDay()||7;
   const mon=new Date(d);mon.setDate(d.getDate()-day+1);
-  return Array.from({length:5},(_,i)=>{
-    const x=new Date(mon);x.setDate(mon.getDate()+i);
-    return x.toISOString().slice(0,10);
-  });
+  return Array.from({length:5},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x.toISOString().slice(0,10)});
 }
 function monthDates(from){
   const d=new Date(from+'T12:00:00');
   const y=d.getFullYear(),m=d.getMonth();
   const n=new Date(y,m+1,0).getDate();
-  return Array.from({length:n},(_,i)=>{
-    const x=new Date(y,m,i+1);return x.toISOString().slice(0,10);
-  });
+  return Array.from({length:n},(_,i)=>{const x=new Date(y,m,i+1);return x.toISOString().slice(0,10)});
 }
 function fmtDate(iso){const[y,m,d]=iso.split('-');return`${m}/${d}`}
 function fmt(n){
@@ -451,10 +293,34 @@ function fmt(n){
   const f=parseFloat(n);
   return Number.isInteger(f)?String(f):f.toFixed(2).replace(/\.?0+$/,'');
 }
+function parseDate(str){
+  if(!str)return null;
+  // Try various formats: MM/DD/YYYY, YYYY-MM-DD, M/D/YYYY, DD-Mon-YYYY
+  str=str.trim();
+  let d=new Date(str);
+  if(!isNaN(d.getTime()))return localDateStr(d.getTime());
+  // Try MM/DD/YYYY
+  const mdy=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mdy) d=new Date(parseInt(mdy[3]),parseInt(mdy[1])-1,parseInt(mdy[2]));
+  if(!isNaN(d.getTime()))return localDateStr(d.getTime());
+  return null;
+}
 
-// ── Score lookup (from pre-calculated Worker data) ────────
+// ── Scoring ───────────────────────────────────────────────
 function scoreFor(repName,date){
-  return data?.scores?.[repName]?.[date]?.score||0;
+  const log=state.logs[repName]?.[date];
+  if(!log)return 0;
+  const calls=log.calls||0;
+  const callAct=state.activities.find(a=>a.type==='calls');
+  const callScore=callAct?parseFloat(((calls/callAct.per)*callAct.pts).toFixed(3)):0;
+  const meetLgAct=state.activities.find(a=>a.type==='meeting_large');
+  const meetSmAct=state.activities.find(a=>a.type==='meeting_small');
+  const secAct=state.activities.find(a=>a.type==='second_meeting');
+  const meetScore=
+    (log.meeting_large||0)*(meetLgAct?.pts||1)+
+    (log.meeting_small||0)*(meetSmAct?.pts||0.5)+
+    (log.second_meeting||0)*(secAct?.pts||0.5);
+  return parseFloat((callScore+meetScore).toFixed(2));
 }
 function avgScore(repName,dates){
   const scores=dates.map(d=>scoreFor(repName,d)).filter(v=>v>0);
@@ -470,127 +336,187 @@ function trendPct(repName,dates){
   return Math.round((b-a)/a*100);
 }
 function maxPossible(){
-  const s=data?.scoring;
-  if(!s)return 10;
-  return s.CALL_PTS*4 + s.MEETING_LARGE*5;
+  return state.activities.reduce((s,a)=>{
+    if(a.type==='calls')return s+a.pts*4;
+    return s+a.pts*5;
+  },0)||10;
+}
+function ensureLog(rep,date){
+  if(!state.logs[rep])state.logs[rep]={};
+  if(!state.logs[rep][date])state.logs[rep][date]={calls:0,meeting_large:0,meeting_small:0,second_meeting:0};
 }
 
-// ── Worker API ────────────────────────────────────────────
-function setStatus(mode,text){
-  const pill=document.getElementById('status-pill');
-  const span=document.getElementById('status-text');
-  pill.className='status-pill '+mode;
-  span.textContent=text;
+// ── CSV Parsing ───────────────────────────────────────────
+let csvData={headers:[],rows:[]};
+
+function handleFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>parseCSV(e.target.result);
+  reader.readAsText(file);
+}
+function parsePaste(){
+  const txt=document.getElementById('csv-paste').value.trim();
+  if(txt)parseCSV(txt);
+  else toast('Paste some CSV text first.');
+}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2){toast('CSV needs a header row and at least one data row.');return;}
+  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+  const rows=lines.slice(1).map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){inQ=!inQ;}
+      else if(line[i]===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=line[i];
+    }
+    cols.push(cur.trim());
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(cols[i]||'').replace(/^"|"$/g,'').trim());
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>v));
+  csvData={headers,rows};
+  buildColMap(headers,rows);
+  toast(`Parsed ${rows.length} rows, ${headers.length} columns`);
 }
 
-async function loadData(){
-  if(!cfg.workerUrl){
-    setStatus('','Not configured');
-    return;
+const FIELD_HINTS={
+  owner:['owner','assigned to','contact owner','rep','salesperson','activity assigned'],
+  date:['date','activity date','close date','created','timestamp'],
+  type:['type','activity type','engagement type'],
+  fleet:['fleet','vehicles','vehicle count','fleet size','number of vehicles','vehicle'],
+  outcome:['outcome','result','subject','title','meeting outcome'],
+};
+function bestGuess(headers,key){
+  const hints=FIELD_HINTS[key];
+  for(const h of headers){
+    if(hints.some(hint=>h.toLowerCase().includes(hint)))return h;
   }
-  setStatus('syncing','Loading...');
-  try{
-    const res=await fetch(cfg.workerUrl+'/data');
-    if(!res.ok) throw new Error('Worker returned '+res.status);
-    data=await res.json();
-    if(data.error) throw new Error(data.error);
-    setStatus('live','Live');
-    document.getElementById('last-upd').textContent=
-      'Updated '+new Date(data.fetchedAt).toLocaleString([],{
-        month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'
-      });
-    document.getElementById('sync-btn').style.display='inline-flex';
-    renderScores();
-    toast('Scores loaded ✓');
-  }catch(err){
-    setStatus('error','Error');
-    showErr(err.message+' — check your Worker URL in Setup, or click Sync now to fetch fresh data.');
-  }
+  return '';
+}
+function buildColMap(headers,rows){
+  const map=document.getElementById('col-map');
+  map.classList.add('show');
+  const fields=[
+    {key:'owner',label:'Rep / Owner name'},
+    {key:'date',label:'Activity date'},
+    {key:'type',label:'Activity type'},
+    {key:'fleet',label:'Fleet / vehicle count'},
+    {key:'outcome',label:'Meeting outcome (optional)'},
+  ];
+  let html='';
+  fields.forEach(f=>{
+    const guess=bestGuess(headers,f.key);
+    html+=`<div class="col-map-row">
+      <div class="col-map-lbl">${f.label}</div>
+      <select id="map-${f.key}">
+        <option value="">— skip —</option>
+        ${headers.map(h=>`<option value="${h}"${h===guess?' selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`;
+  });
+  document.getElementById('col-map-grid').innerHTML=html;
+  // Preview
+  const prev=document.getElementById('preview-box');
+  prev.classList.add('show');
+  prev.textContent=`${rows.length} rows detected. Sample: ${JSON.stringify(rows[0]).slice(0,180)}`;
 }
 
-async function syncNow(){
-  if(!cfg.workerUrl){toast('Enter your Worker URL in Setup first.');setView('setup');return;}
-  setStatus('syncing','Syncing...');
-  document.getElementById('sync-btn').disabled=true;
-  const debugBox=document.getElementById('debug-box');
-  debugBox.textContent='Starting sync...';
-  debugBox.classList.add('show');
+function doImport(){
+  if(!csvData.rows.length){toast('No CSV loaded.');return;}
+  const g=k=>document.getElementById('map-'+k)?.value||'';
+  const ownerCol=g('owner'),dateCol=g('date'),typeCol=g('type'),
+        fleetCol=g('fleet'),outcomeCol=g('outcome');
+  if(!ownerCol||!dateCol){toast('Please map at least Rep and Date columns.');return;}
 
-  try{
-    // Kick off background sync — returns immediately
-    const headers={'Content-Type':'application/json'};
-    if(cfg.syncSecret) headers['X-Sync-Secret']=cfg.syncSecret;
-    const res=await fetch(cfg.workerUrl+'/sync',{method:'POST',headers});
-    const result=await res.json();
-    if(result.error) throw new Error(result.error);
+  let imported=0,skipped=0;
+  // Track meetings per rep+contact for second meeting detection
+  const meetingTracker={};
 
-    debugBox.textContent='Sync running in background...\nChecking for completion every 15 seconds...';
-    toast('Sync started — checking for completion...');
+  // Sort by date ascending for second meeting detection
+  const sorted=[...csvData.rows].sort((a,b)=>{
+    const da=new Date(a[dateCol]||0).getTime();
+    const db=new Date(b[dateCol]||0).getTime();
+    return da-db;
+  });
 
-    // Poll /status every 15s until done
-    let attempts=0;
-    const maxAttempts=30; // 7.5 min max
-    const pollId=setInterval(async()=>{
-      attempts++;
-      try{
-        const sRes=await fetch(cfg.workerUrl+'/status');
-        const sData=await sRes.json();
-        const s=sData.sync||{};
-        const elapsed=Math.round(attempts*15/60*10)/10;
+  sorted.forEach(row=>{
+    const repName=(row[ownerCol]||'').trim();
+    const rawDate=(row[dateCol]||'').trim();
+    const actType=((row[typeCol]||'')).toLowerCase().trim();
+    const fleet=parseInt(row[fleetCol])||0;
 
-        if(s.status==='complete'){
-          clearInterval(pollId);
-          debugBox.textContent='Sync complete at '+s.completedAt+'\nLoading scores...';
-          await loadData();
-          toast('Sync complete \u2713');
-          document.getElementById('sync-btn').disabled=false;
-        } else if(s.status==='error'){
-          clearInterval(pollId);
-          debugBox.textContent='Sync failed: '+(s.error||'Unknown error');
-          setStatus('error','Sync failed');
-          showErr('Sync error: '+s.error);
-          document.getElementById('sync-btn').disabled=false;
-        } else {
-          debugBox.textContent='Sync running... ('+elapsed+' min elapsed)\nStarted: '+(s.startedAt||'unknown');
-          setStatus('syncing','Syncing... '+elapsed+'m');
-        }
+    if(!repName||!rawDate){skipped++;return;}
 
-        if(attempts>=maxAttempts){
-          clearInterval(pollId);
-          debugBox.textContent='Taking longer than expected.\nTry refreshing and clicking Sync now again.';
-          document.getElementById('sync-btn').disabled=false;
-        }
-      }catch(e){
-        debugBox.textContent+='\nPoll error: '+e.message;
+    // Parse date
+    const date=parseDate(rawDate);
+    if(!date){skipped++;return;}
+
+    // Find or create rep
+    let rep=state.reps.find(r=>r.name.toLowerCase()===repName.toLowerCase());
+    if(!rep){
+      rep={id:state.nextRepId++,name:repName,role:'Sales Rep',active:true};
+      state.reps.push(rep);
+    }
+
+    ensureLog(repName,date);
+
+    if(actType.includes('call')){
+      state.logs[repName][date].calls++;
+      imported++;
+    } else if(actType.includes('meeting')){
+      // Second meeting detection using outcome or contact
+      const key=repName+'::'+date;
+      if(!meetingTracker[repName])meetingTracker[repName]=new Set();
+      const contactKey=row[outcomeCol]||''; // use outcome/subject as proxy if no contact ID
+      const isSecond=contactKey&&meetingTracker[repName].has(contactKey);
+      if(contactKey)meetingTracker[repName].add(contactKey);
+
+      if(isSecond){
+        state.logs[repName][date].second_meeting++;
+      } else if(fleet>=state.fleetThreshold){
+        state.logs[repName][date].meeting_large++;
+      } else {
+        state.logs[repName][date].meeting_small++;
       }
-    },15000);
+      imported++;
+    }
+  });
 
-  }catch(err){
-    setStatus('error','Sync failed');
-    showErr('Sync error: '+err.message);
-    debugBox.textContent='ERROR: '+err.message;
-    document.getElementById('sync-btn').disabled=false;
-  }
+  save();
+  document.getElementById('import-status').textContent=
+    `Imported ${imported} activities${skipped?' ('+skipped+' skipped)':''}`;
+  toast(`Imported ${imported} activities ✓`);
+  renderScores();
+  renderScoringDisplay();
+}
+
+function clearData(){
+  if(!confirm('Clear all imported data? This cannot be undone.'))return;
+  state.logs={};
+  state.reps=[];
+  save();
+  renderScores();
+  toast('All data cleared.');
 }
 
 // ── Render: Scores ────────────────────────────────────────
 function renderScores(){
   const sd=document.getElementById('score-date');
-  if(!sd.value) sd.value=todayStr();
+  if(!sd.value)sd.value=todayStr();
   const date=sd.value;
+  const activeReps=state.reps.filter(r=>r.active!==false);
 
-  if(!data||!data.reps){
-    document.getElementById('rep-grid').innerHTML=`
-      <div class="empty-state"><div class="icon">⚡</div>
-      <p>Complete the <strong>Setup</strong> tab and click <strong>Sync now</strong> to load scores.</p></div>`;
-    return;
-  }
-
-  const activeReps=data.reps.filter(r=>r.active!==false);
   if(activeReps.length===0){
     document.getElementById('rep-grid').innerHTML=`
-      <div class="empty-state"><div class="icon">👥</div>
-      <p>No active reps. Go to <strong>Settings</strong> to toggle reps active.</p></div>`;
+      <div class="empty-state"><div class="icon">📥</div>
+      <p>No data yet. Go to the <strong>Import</strong> tab to upload your HubSpot CSV.</p></div>`;
+    document.getElementById('summary-strip').innerHTML=`
+      <div class="sum-card"><div class="sum-lbl">Team today</div><div class="sum-val">—</div></div>
+      <div class="sum-card"><div class="sum-lbl">Top performer</div><div class="sum-val" style="font-size:18px">—</div></div>
+      <div class="sum-card"><div class="sum-lbl">Active today</div><div class="sum-val">—</div></div>
+      <div class="sum-card"><div class="sum-lbl">Week</div><div class="sum-val" style="font-size:16px">—</div></div>`;
     return;
   }
 
@@ -601,7 +527,6 @@ function renderScores(){
   const total=activeReps.reduce((s,r)=>s+scoreFor(r.name,date),0);
   const top=sorted[0];
 
-  // Summary
   document.getElementById('summary-strip').innerHTML=`
     <div class="sum-card">
       <div class="sum-lbl">Team today</div>
@@ -624,7 +549,6 @@ function renderScores(){
       <div class="sum-sub">Mon – Fri</div>
     </div>`;
 
-  // Rep cards
   let html='';
   sorted.forEach((rep,i)=>{
     const c=COLORS[i%COLORS.length];
@@ -635,37 +559,25 @@ function renderScores(){
     const t=trendPct(rep.name,week);
     const pct=mx>0?Math.min(100,Math.round(ts/mx*100)):0;
     const barColor=i===0?'#c8f060':i===1?'#60a8f0':i===2?'#f0b860':'#585654';
-
     let rankHtml='';
-    if(i===0) rankHtml='<span class="rank-badge rb-1">#1</span>';
-    else if(i===1) rankHtml='<span class="rank-badge rb-2">#2</span>';
-    else if(i===2) rankHtml='<span class="rank-badge rb-3">#3</span>';
-
+    if(i===0)rankHtml='<span class="rank-badge rb-1">#1</span>';
+    else if(i===1)rankHtml='<span class="rank-badge rb-2">#2</span>';
+    else if(i===2)rankHtml='<span class="rank-badge rb-3">#3</span>';
     let trendHtml='<span class="trend-pill t-flat">—</span>';
-    if(t!==null) trendHtml=t>0
-      ?`<span class="trend-pill t-up">▲ ${t}%</span>`
-      :t<0?`<span class="trend-pill t-down">▼ ${Math.abs(t)}%</span>`
-      :'<span class="trend-pill t-flat">—</span>';
-
-    // Raw activity breakdown for today
-    const raw=data.scores?.[rep.name]?.[date]?.raw;
-    const rawHtml=raw?`
-      <div style="display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <span style="font-size:11px;color:var(--text3)">Calls: <strong style="color:var(--text2)">${raw.calls||0}</strong></span>
-        <span style="font-size:11px;color:var(--text3)">Lg meetings: <strong style="color:var(--text2)">${raw.meeting_large||0}</strong></span>
-        <span style="font-size:11px;color:var(--text3)">Sm meetings: <strong style="color:var(--text2)">${raw.meeting_small||0}</strong></span>
-        <span style="font-size:11px;color:var(--text3)">2nd meetings: <strong style="color:var(--text2)">${raw.second_meeting||0}</strong></span>
-      </div>`:'';
+    if(t!==null)trendHtml=t>0?`<span class="trend-pill t-up">▲ ${t}%</span>`:t<0?`<span class="trend-pill t-down">▼ ${Math.abs(t)}%</span>`:'<span class="trend-pill t-flat">—</span>';
+    const log=state.logs[rep.name]?.[date];
+    const rawHtml=log?`<div class="raw-row">
+      <span class="raw-item">Calls: <strong>${log.calls||0}</strong></span>
+      <span class="raw-item">Lg meetings: <strong>${log.meeting_large||0}</strong></span>
+      <span class="raw-item">Sm meetings: <strong>${log.meeting_small||0}</strong></span>
+      <span class="raw-item">2nd meetings: <strong>${log.second_meeting||0}</strong></span>
+    </div>`:'';
 
     html+=`<div class="rep-card ${i===0?'rank-1':''}">
       <div class="rep-header">
         <div class="avatar" style="background:${c.bg};color:${c.fg}">${initials}</div>
-        <div class="rep-info">
-          <div class="rep-name">${rep.name}</div>
-          <div class="rep-role">${rep.role||'Sales Rep'}</div>
-        </div>
-        ${rankHtml}
-        ${trendHtml}
+        <div class="rep-info"><div class="rep-name">${rep.name}</div><div class="rep-role">${rep.role}</div></div>
+        ${rankHtml} ${trendHtml}
       </div>
       <div class="scores-row">
         <div class="score-cell"><div class="score-lbl">Today</div><div class="score-num today">${fmt(ts)}</div></div>
@@ -685,134 +597,94 @@ function renderScores(){
 
 // ── Render: Settings ──────────────────────────────────────
 function renderSettings(){
-  if(!data||!data.reps){
-    document.getElementById('rep-settings').innerHTML=
-      '<div style="padding:16px;font-size:13px;color:var(--text3)">Load data first by clicking Sync now.</div>';
-    return;
-  }
-  let html='';
-  data.reps.forEach((r,i)=>{
-    const isActive=r.active!==false;
-    html+=`<div class="s-row">
-      <button class="toggle-btn ${isActive?'toggle-active':'toggle-inactive'}"
-        onclick="toggleRep('${r.id}')">${isActive?'Active':'Inactive'}</button>
-      <span style="font-size:13px;color:var(--text)">${r.name}</span>
-      <input type="text" value="${r.role||'Sales Rep'}" id="role-${r.id}"
-        style="font-size:12px" placeholder="Role">
-      <span></span>
+  // Activities
+  let ah='';
+  state.activities.forEach(a=>{
+    const vf=a.type==='calls'
+      ?`<input type="number" min="1" max="200" value="${a.per}" title="Calls per 1pt" onchange="updAct(${a.id},'per',this.value)">`
+      :`<input type="number" min="0.1" max="100" step="0.1" value="${a.pts}" onchange="updAct(${a.id},'pts',this.value)">`;
+    ah+=`<div class="s-row"><span></span><input type="text" value="${a.name}" onchange="updAct(${a.id},'name',this.value)">${vf}<button class="del-btn" onclick="delAct(${a.id})">×</button></div>`;
+  });
+  document.getElementById('act-settings').innerHTML=ah+
+    `<div class="add-row"><button class="btn btn-ghost btn-sm" onclick="addAct()">+ Add activity</button></div>`;
+
+  // Reps
+  let rh='';
+  state.reps.forEach(r=>{
+    const on=r.active!==false;
+    rh+=`<div class="s-row">
+      <button class="toggle-btn ${on?'t-on':'t-off'}" onclick="toggleRep(${r.id})">${on?'Active':'Inactive'}</button>
+      <input type="text" value="${r.name}" onchange="updRep(${r.id},'name',this.value)">
+      <input type="text" value="${r.role||'Sales Rep'}" onchange="updRep(${r.id},'role',this.value)" style="font-size:12px">
+      <button class="del-btn" onclick="delRep(${r.id})">×</button>
     </div>`;
   });
-  document.getElementById('rep-settings').innerHTML=html+
-    `<div class="save-row">
-      <button class="btn btn-accent" onclick="saveRepSettings()" style="font-size:12px;padding:6px 14px">Save rep settings</button>
-      <span id="rep-save-status" style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace"></span>
-    </div>`;
+  document.getElementById('rep-settings').innerHTML=rh||
+    '<div style="padding:16px;font-size:13px;color:var(--text3)">Reps appear here after importing data.</div>'+
+    `<div class="add-row"><button class="btn btn-ghost btn-sm" onclick="addRep()">+ Add rep manually</button></div>`;
 }
 
-function toggleRep(id){
-  if(!data||!data.reps)return;
-  const rep=data.reps.find(r=>r.id===id);
-  if(rep) rep.active=rep.active===false?true:false;
-  renderSettings();
-}
-
-async function saveRepSettings(){
-  if(!cfg.workerUrl){toast('Worker URL not set.');return;}
-  const statusEl=document.getElementById('rep-save-status');
-  statusEl.textContent='Saving...';
-  try{
-    // Build config object keyed by owner ID
-    const repConfig={};
-    data.reps.forEach(r=>{
-      const roleEl=document.getElementById('role-'+r.id);
-      repConfig[r.id]={
-        active:r.active!==false,
-        role:roleEl?roleEl.value:r.role
-      };
-      if(roleEl) r.role=roleEl.value;
-    });
-    const headers={'Content-Type':'application/json'};
-    if(cfg.syncSecret) headers['X-Sync-Secret']=cfg.syncSecret;
-    const res=await fetch(cfg.workerUrl+'/rep-config',{
-      method:'POST',headers,body:JSON.stringify(repConfig)
-    });
-    const result=await res.json();
-    if(result.error) throw new Error(result.error);
-    statusEl.textContent='Saved ✓';
-    setTimeout(()=>statusEl.textContent='',2000);
-    toast('Rep settings saved ✓');
-  }catch(e){
-    statusEl.textContent='Error: '+e.message;
-    toast('Save failed: '+e.message);
-  }
-}
-
-// ── Setup ─────────────────────────────────────────────────
-function saveSetup(){
-  cfg.workerUrl=(document.getElementById('cfg-worker-url').value||'').trim().replace(/\/$/,'');
-  cfg.syncSecret=document.getElementById('cfg-sync-secret').value.trim();
-  saveCfg();
-  document.getElementById('setup-status').textContent='Saved ✓';
-  setTimeout(()=>document.getElementById('setup-status').textContent='',2000);
-  toast('Setup saved. Click Sync now to load data.');
-  loadData();
-}
-
-function renderScoringRules(){
-  const s=data?.scoring||{
-    CALL_PER:25,CALL_PTS:1.0,MEETING_LARGE:1.0,
-    MEETING_SMALL:0.5,SECOND_MEETING:0.5,FLEET_THRESHOLD:10
-  };
-  document.getElementById('scoring-rules').innerHTML=`
+function renderScoringDisplay(){
+  const a=state.activities;
+  const lg=a.find(x=>x.type==='meeting_large');
+  const sm=a.find(x=>x.type==='meeting_small');
+  const ca=a.find(x=>x.type==='calls');
+  const sec=a.find(x=>x.type==='second_meeting');
+  document.getElementById('scoring-display').innerHTML=`
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Meeting — fleet size ≥ ${s.FLEET_THRESHOLD} vehicles</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${s.MEETING_LARGE} pt</span>
+      <span style="color:var(--text2)">Meeting — fleet ≥ ${state.fleetThreshold} vehicles</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${lg?.pts||1} pt</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Meeting — fleet size < ${s.FLEET_THRESHOLD} vehicles</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${s.MEETING_SMALL} pt</span>
+      <span style="color:var(--text2)">Meeting — fleet < ${state.fleetThreshold} vehicles</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sm?.pts||0.5} pt</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Calls (pro-rated per ${s.CALL_PER})</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${s.CALL_PER}</span>
+      <span style="color:var(--text2)">Calls — pro-rated per ${ca?.per||25}</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${ca?.per||25}</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Second meeting with same contact</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${s.SECOND_MEETING} pt</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sec?.pts||0.5} pt</span>
     </div>`;
 }
 
+// ── Settings actions ──────────────────────────────────────
+function updAct(id,f,v){const a=state.activities.find(x=>x.id===id);if(!a)return;if(f==='pts'||f==='per')a[f]=parseFloat(v)||1;else a[f]=v;save();renderSettings();renderScores();}
+function delAct(id){state.activities=state.activities.filter(a=>a.id!==id);save();renderSettings();}
+function addAct(){state.activities.push({id:state.nextActId++,name:'New activity',pts:1,type:'custom'});save();renderSettings();}
+function toggleRep(id){const r=state.reps.find(x=>x.id===id);if(r){r.active=r.active===false;}save();renderSettings();renderScores();}
+function updRep(id,f,v){const r=state.reps.find(x=>x.id===id);if(r)r[f]=v;save();}
+function delRep(id){state.reps=state.reps.filter(r=>r.id!==id);save();renderSettings();renderScores();}
+function addRep(){state.reps.push({id:state.nextRepId++,name:'New Rep',role:'Sales Rep',active:true});save();renderSettings();}
+
 // ── View routing ──────────────────────────────────────────
 function setView(v){
-  ['scores','settings','setup'].forEach(id=>{
+  ['scores','import','settings'].forEach(id=>{
     document.getElementById('view-'+id).style.display=id===v?'block':'none';
   });
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('active',['scores','settings','setup'][i]===v);
+    t.classList.toggle('active',['scores','import','settings'][i]===v);
   });
-  if(v==='scores') renderScores();
-  if(v==='settings') renderSettings();
-  if(v==='setup'){
-    document.getElementById('cfg-worker-url').value=cfg.workerUrl||'';
-    document.getElementById('cfg-sync-secret').value=cfg.syncSecret||'';
-    renderScoringRules();
-  }
+  if(v==='scores')renderScores();
+  if(v==='settings')renderSettings();
+  if(v==='import')renderScoringDisplay();
 }
 
 // ── Utils ─────────────────────────────────────────────────
-function showErr(msg){const b=document.getElementById('err-banner');b.textContent=msg;b.classList.toggle('show',!!msg);}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-function toggleDebug(){document.getElementById('debug-box').classList.toggle('show');}
+
+// ── Drag & drop ───────────────────────────────────────────
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleFile(f);});
 
 // ── Init ──────────────────────────────────────────────────
-loadCfg();
+load();
 document.getElementById('score-date').value=todayStr();
-if(cfg.workerUrl){
-  loadData();
-} else {
-  setStatus('','Not configured');
-  setView('setup');
-}
+renderScores();
+renderScoringDisplay();
 </script>
 </body>
 </html>
