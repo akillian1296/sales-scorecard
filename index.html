@@ -8,18 +8,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0c0c0b;--surface:#161615;--surface2:#1e1e1c;--surface3:#262624;
-  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
-  --text:#eeecea;--text2:#9a9890;--text3:#585654;
-  --accent:#c8f060;--blue:#60a8f0;--red:#f06060;--red-bg:rgba(240,96,96,0.08);
+  --bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;--surface3:#242424;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f5f5f5;--text2:#a0a0a0;--text3:#606060;
+  --accent:#E8271A;--accent-hover:#ff3326;--accent-dim:rgba(232,39,26,0.15);
+  --accent-glow:rgba(232,39,26,0.25);
+  --blue:#60a8f0;--red:#f06060;--red-bg:rgba(240,96,96,0.08);
   --amber:#f0b860;--green:#60f0a8;--radius:10px;--radius-lg:14px;--radius-xl:20px;
 }
 body{font-family:'Syne',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
 .shell{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 4rem;position:relative;z-index:1}
 header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
 .logo{display:flex;align-items:center;gap:14px}
-.logo-mark{width:44px;height:44px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;color:#0c0c0b;font-size:14px;font-weight:500;flex-shrink:0;box-shadow:0 0 20px rgba(200,240,96,0.2)}
+.logo-mark{width:44px;height:44px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 24px var(--accent-glow)}
 .logo-text h1{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px}
 .logo-text p{font-size:12px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
 .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -28,14 +30,14 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
 .tab:hover{color:var(--text2)}
 .tab.active{background:var(--surface3);color:var(--text);border:1px solid var(--border2)}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;border-radius:var(--radius);cursor:pointer;transition:all .15s;border:none;letter-spacing:.02em}
-.btn-accent{background:var(--accent);color:#0c0c0b}
-.btn-accent:hover{background:#d4f570;box-shadow:0 0 16px rgba(200,240,96,0.3)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-hover);box-shadow:0 0 16px var(--accent-glow)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
 .btn-sm{padding:5px 12px;font-size:11px}
 .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
-.sum-card:first-child{border-color:rgba(200,240,96,0.15)}
+.sum-card:first-child{border-color:rgba(232,39,26,0.2)}
 .sum-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-weight:600}
 .sum-val{font-size:26px;font-weight:800;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:-.5px}
 .sum-val.accent{color:var(--accent)}
@@ -48,19 +50,19 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
 .rep-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px 22px;transition:all .2s;position:relative;overflow:hidden}
 .rep-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:transparent;transition:background .2s}
 .rep-card:hover{border-color:var(--border2)}
-.rep-card.rank-1{border-color:rgba(200,240,96,0.18)}
-.rep-card.rank-1::before{background:linear-gradient(90deg,transparent,rgba(200,240,96,0.25),transparent)}
+.rep-card.rank-1{border-color:rgba(232,39,26,0.2)}
+.rep-card.rank-1::before{background:linear-gradient(90deg,transparent,rgba(232,39,26,0.2),transparent)}
 .rep-header{display:flex;align-items:center;gap:13px;margin-bottom:16px}
 .avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;font-family:'DM Mono',monospace}
 .rep-info{flex:1}
 .rep-name{font-size:15px;font-weight:700;color:var(--text)}
 .rep-role{font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace}
 .rank-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace}
-.rb-1{background:rgba(200,240,96,0.12);color:var(--accent);border:1px solid rgba(200,240,96,0.2)}
+.rb-1{background:rgba(232,39,26,0.12);color:var(--accent);border:1px solid rgba(232,39,26,0.25)}
 .rb-2{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border2)}
 .rb-3{background:rgba(240,184,96,0.1);color:var(--amber);border:1px solid rgba(240,184,96,0.2)}
 .trend-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace}
-.t-up{background:rgba(200,240,96,0.1);color:var(--accent)}
+.t-up{background:rgba(96,200,130,0.12);color:#60c882}
 .t-down{background:var(--red-bg);color:var(--red)}
 .t-flat{background:var(--surface2);color:var(--text3)}
 .scores-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
@@ -88,7 +90,7 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
 .step-t strong{color:var(--text)}
 .step-t code{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace;color:var(--accent);font-size:11px}
 .drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative;margin-top:20px}
-.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(200,240,96,0.04)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(232,39,26,0.04)}
 .drop-icon{font-size:30px;margin-bottom:10px;opacity:.4}
 .drop-label{font-size:14px;font-weight:600;color:var(--text2)}
 .drop-sub{font-size:12px;color:var(--text3);margin-top:4px}
@@ -116,7 +118,7 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
 .s-row input[type=text]{font-size:13px;font-family:'Syne',sans-serif;border:1px solid var(--border);border-radius:7px;padding:5px 9px;background:var(--surface2);color:var(--text);width:100%}
 .s-row input[type=number]{font-size:13px;font-family:'DM Mono',monospace;border:1px solid var(--border);border-radius:7px;padding:5px 7px;text-align:center;background:var(--surface2);color:var(--text);width:100%}
 .toggle-btn{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;border:none;transition:all .15s}
-.t-on{background:rgba(200,240,96,0.12);color:var(--accent);border:1px solid rgba(200,240,96,0.25)}
+.t-on{background:rgba(232,39,26,0.12);color:var(--accent);border:1px solid rgba(232,39,26,0.25)}
 .t-off{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
 .del-btn{width:28px;height:28px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:6px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .del-btn:hover{background:var(--red-bg);color:var(--red)}
@@ -134,8 +136,15 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
 <div class="shell">
   <header>
     <div class="logo">
-      <div class="logo-mark">SS</div>
-      <div class="logo-text"><h1>Sales Scorecard</h1><p>HubSpot CSV Import</p></div>
+      <div class="logo-mark">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="22" height="22" rx="2" stroke="white" stroke-width="1.5" fill="none"/>
+          <path d="M14 6 L14 22" stroke="white" stroke-width="1.5" stroke-dasharray="2 2"/>
+          <path d="M4 14 L24 14" stroke="white" stroke-width="1"/>
+          <path d="M10 10 L14 6 L18 10" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-text"><h1>RoutingBox</h1><p style="color:var(--accent);font-weight:600;letter-spacing:.05em">SALES SCORECARD</p></div>
     </div>
     <div class="header-right">
       <div class="tabs">
@@ -250,6 +259,7 @@ let state={
     {id:2,name:'Meeting (<10 vehicles)',pts:0.5,type:'meeting_small'},
     {id:3,name:'Calls (per 25)',pts:1.0,type:'calls',per:25},
     {id:4,name:'Second meeting',pts:0.5,type:'second_meeting'},
+    {id:5,name:'Connected calls (per 5)',pts:1.0,type:'connected_calls',per:5},
   ],
   reps:[],
   logs:{}, // repName -> date -> {meeting_large,meeting_small,calls,second_meeting}
@@ -310,17 +320,18 @@ function parseDate(str){
 function scoreFor(repName,date){
   const log=state.logs[repName]?.[date];
   if(!log)return 0;
-  const calls=log.calls||0;
   const callAct=state.activities.find(a=>a.type==='calls');
-  const callScore=callAct?parseFloat(((calls/callAct.per)*callAct.pts).toFixed(3)):0;
+  const connAct=state.activities.find(a=>a.type==='connected_calls');
   const meetLgAct=state.activities.find(a=>a.type==='meeting_large');
   const meetSmAct=state.activities.find(a=>a.type==='meeting_small');
   const secAct=state.activities.find(a=>a.type==='second_meeting');
+  const callScore=callAct?parseFloat(((( log.calls||0)/callAct.per)*callAct.pts).toFixed(3)):0;
+  const connScore=connAct?parseFloat((((log.connected_calls||0)/connAct.per)*connAct.pts).toFixed(3)):0;
   const meetScore=
     (log.meeting_large||0)*(meetLgAct?.pts||1)+
     (log.meeting_small||0)*(meetSmAct?.pts||0.5)+
     (log.second_meeting||0)*(secAct?.pts||0.5);
-  return parseFloat((callScore+meetScore).toFixed(2));
+  return parseFloat((callScore+connScore+meetScore).toFixed(2));
 }
 function avgScore(repName,dates){
   const scores=dates.map(d=>scoreFor(repName,d)).filter(v=>v>0);
@@ -336,14 +347,11 @@ function trendPct(repName,dates){
   return Math.round((b-a)/a*100);
 }
 function maxPossible(){
-  return state.activities.reduce((s,a)=>{
-    if(a.type==='calls')return s+a.pts*4;
-    return s+a.pts*5;
-  },0)||10;
+  return 5; // bar based on 5 point daily target
 }
 function ensureLog(rep,date){
   if(!state.logs[rep])state.logs[rep]={};
-  if(!state.logs[rep][date])state.logs[rep][date]={calls:0,meeting_large:0,meeting_small:0,second_meeting:0};
+  if(!state.logs[rep][date])state.logs[rep][date]={calls:0,connected_calls:0,meeting_large:0,meeting_small:0,second_meeting:0};
 }
 
 // ── CSV Parsing ───────────────────────────────────────────
@@ -386,7 +394,7 @@ const FIELD_HINTS={
   date:['date','activity date','close date','created','timestamp'],
   type:['type','activity type','engagement type'],
   fleet:['fleet','vehicles','vehicle count','fleet size','number of vehicles','vehicle'],
-  outcome:['outcome','result','subject','title','meeting outcome'],
+  outcome:['outcome','result','subject','title','meeting outcome','call outcome','call result'],
 };
 function bestGuess(headers,key){
   const hints=FIELD_HINTS[key];
@@ -403,7 +411,7 @@ function buildColMap(headers,rows){
     {key:'date',label:'Activity date'},
     {key:'type',label:'Activity type'},
     {key:'fleet',label:'Fleet / vehicle count'},
-    {key:'outcome',label:'Meeting outcome (optional)'},
+    {key:'outcome',label:'Call outcome / Meeting subject'},
   ];
   let html='';
   fields.forEach(f=>{
@@ -462,8 +470,15 @@ function doImport(){
 
     ensureLog(repName,date);
 
+    // Get call outcome if mapped
+    const outcomeVal=(row[g('outcome')]||'').toLowerCase().trim();
     if(actType.includes('call')){
-      state.logs[repName][date].calls++;
+      // Connected call = outcome is 'connected'
+      if(outcomeVal==='connected'){
+        state.logs[repName][date].connected_calls++;
+      } else {
+        state.logs[repName][date].calls++;
+      }
       imported++;
     } else if(actType.includes('meeting')){
       // Second meeting detection using outcome or contact
@@ -558,7 +573,7 @@ function renderScores(){
     const ma=avgScore(rep.name,month);
     const t=trendPct(rep.name,week);
     const pct=mx>0?Math.min(100,Math.round(ts/mx*100)):0;
-    const barColor=i===0?'#c8f060':i===1?'#60a8f0':i===2?'#f0b860':'#585654';
+    const barColor=i===0?'#E8271A':i===1?'#60a8f0':i===2?'#f0b860':'#585654';
     let rankHtml='';
     if(i===0)rankHtml='<span class="rank-badge rb-1">#1</span>';
     else if(i===1)rankHtml='<span class="rank-badge rb-2">#2</span>';
@@ -567,6 +582,7 @@ function renderScores(){
     if(t!==null)trendHtml=t>0?`<span class="trend-pill t-up">▲ ${t}%</span>`:t<0?`<span class="trend-pill t-down">▼ ${Math.abs(t)}%</span>`:'<span class="trend-pill t-flat">—</span>';
     const log=state.logs[rep.name]?.[date];
     const rawHtml=log?`<div class="raw-row">
+      <span class="raw-item">Connected calls: <strong>${log.connected_calls||0}</strong></span>
       <span class="raw-item">Calls: <strong>${log.calls||0}</strong></span>
       <span class="raw-item">Lg meetings: <strong>${log.meeting_large||0}</strong></span>
       <span class="raw-item">Sm meetings: <strong>${log.meeting_small||0}</strong></span>
@@ -630,6 +646,7 @@ function renderScoringDisplay(){
   const sm=a.find(x=>x.type==='meeting_small');
   const ca=a.find(x=>x.type==='calls');
   const sec=a.find(x=>x.type==='second_meeting');
+  const conn=a.find(x=>x.type==='connected_calls');
   document.getElementById('scoring-display').innerHTML=`
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Meeting — fleet ≥ ${state.fleetThreshold} vehicles</span>
@@ -640,12 +657,20 @@ function renderScoringDisplay(){
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sm?.pts||0.5} pt</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Calls — pro-rated per ${ca?.per||25}</span>
+      <span style="color:var(--text2)">Connected calls — per ${conn?.per||5} (Call Outcome = Connected)</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${conn?.per||5}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
+      <span style="color:var(--text2)">Calls (not connected) — per ${ca?.per||25}</span>
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${ca?.per||25}</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Second meeting with same contact</span>
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sec?.pts||0.5} pt</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface3);border-radius:8px;font-size:12px;border:1px solid var(--border)">
+      <span style="color:var(--text3)">Progress bar target</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--text3);font-weight:600">5 pts = 100%</span>
     </div>`;
 }
 
