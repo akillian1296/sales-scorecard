@@ -258,11 +258,10 @@ let state={
     {id:1,name:'Meeting (10+ vehicles)',pts:1.0,type:'meeting_large'},
     {id:2,name:'Meeting (<10 vehicles)',pts:0.5,type:'meeting_small'},
     {id:3,name:'Calls (per 25)',pts:1.0,type:'calls',per:25},
-    {id:4,name:'Second meeting',pts:0.5,type:'second_meeting'},
     {id:5,name:'Connected calls (per 5)',pts:1.0,type:'connected_calls',per:5},
   ],
   reps:[],
-  logs:{}, // repName -> date -> {meeting_large,meeting_small,calls,second_meeting}
+  logs:{}, // repName -> date -> {meeting_large,meeting_small,calls,connected_calls}
   nextActId:10,
   nextRepId:10,
   fleetThreshold:10,
@@ -324,13 +323,11 @@ function scoreFor(repName,date){
   const connAct=state.activities.find(a=>a.type==='connected_calls');
   const meetLgAct=state.activities.find(a=>a.type==='meeting_large');
   const meetSmAct=state.activities.find(a=>a.type==='meeting_small');
-  const secAct=state.activities.find(a=>a.type==='second_meeting');
-  const callScore=callAct?parseFloat(((( log.calls||0)/callAct.per)*callAct.pts).toFixed(3)):0;
+  const callScore=callAct?parseFloat((((log.calls||0)/callAct.per)*callAct.pts).toFixed(3)):0;
   const connScore=connAct?parseFloat((((log.connected_calls||0)/connAct.per)*connAct.pts).toFixed(3)):0;
   const meetScore=
     (log.meeting_large||0)*(meetLgAct?.pts||1)+
-    (log.meeting_small||0)*(meetSmAct?.pts||0.5)+
-    (log.second_meeting||0)*(secAct?.pts||0.5);
+    (log.meeting_small||0)*(meetSmAct?.pts||0.5);
   return parseFloat((callScore+connScore+meetScore).toFixed(2));
 }
 function avgScore(repName,dates){
@@ -351,7 +348,7 @@ function maxPossible(){
 }
 function ensureLog(rep,date){
   if(!state.logs[rep])state.logs[rep]={};
-  if(!state.logs[rep][date])state.logs[rep][date]={calls:0,connected_calls:0,meeting_large:0,meeting_small:0,second_meeting:0};
+  if(!state.logs[rep][date])state.logs[rep][date]={calls:0,connected_calls:0,meeting_large:0,meeting_small:0};
 }
 
 // ── CSV Parsing ───────────────────────────────────────────
@@ -439,8 +436,6 @@ function doImport(){
   if(!ownerCol||!dateCol){toast('Please map at least Rep and Date columns.');return;}
 
   let imported=0,skipped=0;
-  // Track meetings per rep+contact for second meeting detection
-  const meetingTracker={};
 
   // Sort by date ascending for second meeting detection
   const sorted=[...csvData.rows].sort((a,b)=>{
@@ -481,16 +476,7 @@ function doImport(){
       }
       imported++;
     } else if(actType.includes('meeting')){
-      // Second meeting detection using outcome or contact
-      const key=repName+'::'+date;
-      if(!meetingTracker[repName])meetingTracker[repName]=new Set();
-      const contactKey=row[outcomeCol]||''; // use outcome/subject as proxy if no contact ID
-      const isSecond=contactKey&&meetingTracker[repName].has(contactKey);
-      if(contactKey)meetingTracker[repName].add(contactKey);
-
-      if(isSecond){
-        state.logs[repName][date].second_meeting++;
-      } else if(fleet>=state.fleetThreshold){
+      if(fleet>=state.fleetThreshold){
         state.logs[repName][date].meeting_large++;
       } else {
         state.logs[repName][date].meeting_small++;
@@ -586,7 +572,6 @@ function renderScores(){
       <span class="raw-item">Calls: <strong>${log.calls||0}</strong></span>
       <span class="raw-item">Lg meetings: <strong>${log.meeting_large||0}</strong></span>
       <span class="raw-item">Sm meetings: <strong>${log.meeting_small||0}</strong></span>
-      <span class="raw-item">2nd meetings: <strong>${log.second_meeting||0}</strong></span>
     </div>`:'';
 
     html+=`<div class="rep-card ${i===0?'rank-1':''}">
@@ -649,7 +634,6 @@ function renderScoringDisplay(){
   const lg=a.find(x=>x.type==='meeting_large');
   const sm=a.find(x=>x.type==='meeting_small');
   const ca=a.find(x=>x.type==='calls');
-  const sec=a.find(x=>x.type==='second_meeting');
   const conn=a.find(x=>x.type==='connected_calls');
   document.getElementById('scoring-display').innerHTML=`
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
@@ -668,10 +652,7 @@ function renderScoringDisplay(){
       <span style="color:var(--text2)">Calls (not connected) — per ${ca?.per||25}</span>
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${ca?.per||25}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Second meeting with same contact</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sec?.pts||0.5} pt</span>
-    </div>
+
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface3);border-radius:8px;font-size:12px;border:1px solid var(--border)">
       <span style="color:var(--text3)">Progress bar target</span>
       <span style="font-family:'DM Mono',monospace;color:var(--text3);font-weight:600">5 pts = 100%</span>
