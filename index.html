@@ -596,7 +596,7 @@ function renderScores(){
         ${rankHtml} ${trendHtml}
       </div>
       <div class="scores-row">
-        <div class="score-cell"><div class="score-lbl">Today</div><div class="score-num today">${fmt(ts)}</div></div>
+        <div class="score-cell"><div class="score-lbl">Today</div><div class="score-num" style="color:${ts>=5?'#60c882':'#E8271A'}">${fmt(ts)}</div></div>
         <div class="score-cell"><div class="score-lbl">Week avg</div><div class="score-num">${wa?fmt(wa):'—'}</div></div>
         <div class="score-cell"><div class="score-lbl">Month avg</div><div class="score-num">${ma?fmt(ma):'—'}</div></div>
         <div class="score-cell"><div class="score-lbl">Week trend</div><div class="score-num" style="font-size:16px">${t!==null?(t>0?'+':'')+t+'%':'—'}</div></div>
@@ -616,10 +616,14 @@ function renderSettings(){
   // Activities
   let ah='';
   state.activities.forEach(a=>{
-    const vf=a.type==='calls'
-      ?`<input type="number" min="1" max="200" value="${a.per}" title="Calls per 1pt" onchange="updAct(${a.id},'per',this.value)">`
+    const isConn=a.type==='connected_calls';
+    const isCalls=a.type==='calls';
+    const vf=(isConn||isCalls)
+      ?`<input type="number" min="1" max="200" value="${a.per}" title="${isConn?'Connected calls':'Calls'} per 1pt" onchange="updAct(${a.id},'per',this.value)">`
       :`<input type="number" min="0.1" max="100" step="0.1" value="${a.pts}" onchange="updAct(${a.id},'pts',this.value)">`;
-    ah+=`<div class="s-row"><span></span><input type="text" value="${a.name}" onchange="updAct(${a.id},'name',this.value)">${vf}<button class="del-btn" onclick="delAct(${a.id})">×</button></div>`;
+    const rowStyle=isConn?'border-left:3px solid #E8271A;background:rgba(232,39,26,0.04)':'';
+    const badge=isConn?`<span style="font-size:10px;background:rgba(232,39,26,0.12);color:#E8271A;border:1px solid rgba(232,39,26,0.25);border-radius:4px;padding:2px 6px;font-weight:700;white-space:nowrap">NEW</span>`:'<span></span>';
+    ah+=`<div class="s-row" style="${rowStyle}">${badge}<input type="text" value="${a.name}" onchange="updAct(${a.id},'name',this.value)">${vf}<button class="del-btn" onclick="delAct(${a.id})">×</button></div>`;
   });
   document.getElementById('act-settings').innerHTML=ah+
     `<div class="add-row"><button class="btn btn-ghost btn-sm" onclick="addAct()">+ Add activity</button></div>`;
