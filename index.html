@@ -195,7 +195,7 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
         </li>
         <li>
           <div class="step-n">4</div>
-          <div class="step-t">Drop the CSV below. Map your columns, then click <strong>Import</strong>. Scores update instantly.</div>
+          <div class="step-t">Drop the CSV below. Map your columns, then click <strong>Import</strong>. Scores update instantly. Make sure to include <code>Outcome Completed Count</code> in your export — only meetings with a value of <code>1</code> are counted.</div>
         </li>
       </ol>
 
@@ -403,6 +403,7 @@ const FIELD_HINTS={
   fleet:['fleet','vehicles','vehicle count','fleet size','number of vehicles','vehicle'],
   outcome:['outcome','result','subject','title','meeting outcome','call outcome','call result'],
   activityId:['activity id','engagement id','record id','id','unique id','hubspot id'],
+  completed:['outcome completed count','completed count','outcome completed','completion','completed'],
 };
 function bestGuess(headers,key){
   const hints=FIELD_HINTS[key];
@@ -419,7 +420,8 @@ function buildColMap(headers,rows){
     {key:'date',label:'Activity date'},
     {key:'type',label:'Activity type'},
     {key:'fleet',label:'Fleet / vehicle count'},
-    {key:'outcome',label:'Call outcome / Meeting subject'},
+    {key:'outcome',label:'Call outcome (Connected = connected call)'},
+    {key:'completed',label:'Outcome completed count (1 = meeting happened)'},
     {key:'activityId',label:'Activity ID (prevents duplicates)'},
   ];
   let html='';
@@ -444,7 +446,8 @@ function doImport(){
   if(!csvData.rows.length){toast('No CSV loaded.');return;}
   const g=k=>document.getElementById('map-'+k)?.value||'';
   const ownerCol=g('owner'),dateCol=g('date'),typeCol=g('type'),
-        fleetCol=g('fleet'),outcomeCol=g('outcome'),idCol=g('activityId');
+        fleetCol=g('fleet'),outcomeCol=g('outcome'),idCol=g('activityId'),
+        completedCol=g('completed');
   if(!ownerCol||!dateCol){toast('Please map at least Rep and Date columns.');return;}
 
   // Ask user whether to add to existing data or replace it
@@ -507,6 +510,10 @@ function doImport(){
       }
       imported++;
     } else if(actType.includes('meeting')){
+      // Only count meetings where Outcome Completed Count = 1
+      // If the column isn't mapped, count all meetings (backwards compatible)
+      const completedVal=completedCol?(row[completedCol]||'').trim():'1';
+      if(completedVal!=='1'){skipped++;return;}
       if(fleet>=state.fleetThreshold){
         state.logs[repName][date].meeting_large++;
       } else {
