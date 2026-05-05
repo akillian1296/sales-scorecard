@@ -234,12 +234,11 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
   <!-- Settings -->
   <div id="view-settings" style="display:none">
     <div class="settings-section">
-      <div class="settings-hdr">Activity scoring rules</div>
-      <div class="settings-card" id="act-settings"></div>
-    </div>
-    <div class="settings-section">
-      <div class="settings-hdr">Sales reps</div>
+      <div class="settings-hdr">Sales reps — toggle active/inactive</div>
       <div class="settings-card" id="rep-settings"></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;font-size:12px;color:var(--text3);line-height:1.7">
+      Scoring rules are configured in the source code. Current rules: <strong style="color:var(--text2)">Meeting 10+ vehicles = 1pt · Meeting &lt;10 vehicles = 0.5pt · Connected calls per 10 = 1pt · Calls per 25 = 1pt</strong>
     </div>
   </div>
 </div>
@@ -258,7 +257,7 @@ let state={
     {id:1,name:'Meeting (10+ vehicles)',pts:1.0,type:'meeting_large'},
     {id:2,name:'Meeting (<10 vehicles)',pts:0.5,type:'meeting_small'},
     {id:3,name:'Calls (per 25)',pts:1.0,type:'calls',per:25},
-    {id:5,name:'Connected calls (per 5)',pts:1.0,type:'connected_calls',per:5},
+    {id:5,name:'Connected calls (per 10)',pts:1.0,type:'connected_calls',per:10},
   ],
   reps:[],
   logs:{}, // repName -> date -> {meeting_large,meeting_small,calls,connected_calls}
@@ -643,21 +642,6 @@ function renderScores(){
 
 // ── Render: Settings ──────────────────────────────────────
 function renderSettings(){
-  // Activities
-  let ah='';
-  state.activities.forEach(a=>{
-    const isConn=a.type==='connected_calls';
-    const isCalls=a.type==='calls';
-    const vf=(isConn||isCalls)
-      ?`<input type="number" min="1" max="200" value="${a.per}" title="${isConn?'Connected calls':'Calls'} per 1pt" onchange="updAct(${a.id},'per',this.value)">`
-      :`<input type="number" min="0.1" max="100" step="0.1" value="${a.pts}" onchange="updAct(${a.id},'pts',this.value)">`;
-    const rowStyle=isConn?'border-left:3px solid #E8271A;background:rgba(232,39,26,0.04)':'';
-    const badge=isConn?`<span style="font-size:10px;background:rgba(232,39,26,0.12);color:#E8271A;border:1px solid rgba(232,39,26,0.25);border-radius:4px;padding:2px 6px;font-weight:700;white-space:nowrap">NEW</span>`:'<span></span>';
-    ah+=`<div class="s-row" style="${rowStyle}">${badge}<input type="text" value="${a.name}" onchange="updAct(${a.id},'name',this.value)">${vf}<button class="del-btn" onclick="delAct(${a.id})">×</button></div>`;
-  });
-  document.getElementById('act-settings').innerHTML=ah+
-    `<div class="add-row"><button class="btn btn-ghost btn-sm" onclick="addAct()">+ Add activity</button></div>`;
-
   // Reps
   let rh='';
   state.reps.forEach(r=>{
@@ -705,9 +689,7 @@ function renderScoringDisplay(){
 }
 
 // ── Settings actions ──────────────────────────────────────
-function updAct(id,f,v){const a=state.activities.find(x=>x.id===id);if(!a)return;if(f==='pts'||f==='per')a[f]=parseFloat(v)||1;else a[f]=v;save();renderSettings();renderScores();}
-function delAct(id){state.activities=state.activities.filter(a=>a.id!==id);save();renderSettings();}
-function addAct(){state.activities.push({id:state.nextActId++,name:'New activity',pts:1,type:'custom'});save();renderSettings();}
+// Activity scoring is managed in source code only
 function toggleRep(id){const r=state.reps.find(x=>x.id===id);if(r){r.active=r.active===false;}save();renderSettings();renderScores();}
 function updRep(id,f,v){const r=state.reps.find(x=>x.id===id);if(r)r[f]=v;save();}
 function delRep(id){state.reps=state.reps.filter(r=>r.id!==id);save();renderSettings();renderScores();}
