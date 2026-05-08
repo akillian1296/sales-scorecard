@@ -238,7 +238,7 @@ input[type=date]:focus{outline:1px solid var(--accent);outline-offset:1px}
       <div class="settings-card" id="rep-settings"></div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;font-size:12px;color:var(--text3);line-height:1.7">
-      Scoring rules are configured in the source code. Current rules: <strong style="color:var(--text2)">Meeting 10+ vehicles = 1pt · Meeting &lt;10 vehicles = 0.5pt · Connected calls per 10 = 1pt · Calls per 25 = 1pt</strong>
+      Scoring rules are configured in the source code. Current rules: <strong style="color:var(--text2)">Meeting 10+ vehicles = 1.5pt · Meeting &lt;10 vehicles = 1pt · Connected calls per 10 = 1pt · Calls per 25 = 0.5pt</strong>
     </div>
   </div>
 </div>
@@ -254,9 +254,9 @@ const COLORS=[
 
 let state={
   activities:[
-    {id:1,name:'Meeting (10+ vehicles)',pts:1.0,type:'meeting_large'},
-    {id:2,name:'Meeting (<10 vehicles)',pts:0.5,type:'meeting_small'},
-    {id:3,name:'Calls (per 25)',pts:1.0,type:'calls',per:25},
+    {id:1,name:'Meeting (10+ vehicles)',pts:1.5,type:'meeting_large'},
+    {id:2,name:'Meeting (<10 vehicles)',pts:1.0,type:'meeting_small'},
+    {id:3,name:'Calls (per 25)',pts:0.5,type:'calls',per:25},
     {id:5,name:'Connected calls (per 10)',pts:1.0,type:'connected_calls',per:10},
   ],
   reps:[],
@@ -667,18 +667,18 @@ function renderScoringDisplay(){
   document.getElementById('scoring-display').innerHTML=`
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Meeting — fleet ≥ ${state.fleetThreshold} vehicles</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${lg?.pts||1} pt</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${lg?.pts||1.5} pt</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Meeting — fleet < ${state.fleetThreshold} vehicles</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sm?.pts||0.5} pt</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">${sm?.pts||1} pt</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
       <span style="color:var(--text2)">Connected calls — per ${conn?.per||10} (Call Outcome = Connected)</span>
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${conn?.per||10}</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:13px">
-      <span style="color:var(--text2)">Calls (not connected) — per ${ca?.per||25}</span>
+      <span style="color:var(--text2)">Calls (not connected) — per ${ca?.per||25} = 0.5pt</span>
       <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:600">calls ÷ ${ca?.per||25}</span>
     </div>
 
