@@ -571,12 +571,12 @@ function renderScores(){
   const top=sorted[0];
 
   const teamTarget=activeReps.length*5;
-  const teamColor=total>=teamTarget?'#60c882':'#E8271A';
-  document.getElementById('summary-strip').innerHTML=`
+  const teamYellow=activeReps.length*4;
+  const teamColor=total>=teamTarget?'#60c882':total>=teamYellow?'#f0c040':'#E8271A';  document.getElementById('summary-strip').innerHTML=`
     <div class="sum-card">
       <div class="sum-lbl">Team today</div>
       <div class="sum-val" style="color:${teamColor}">${fmt(total)}</div>
-      <div class="sum-sub" style="color:${teamColor};opacity:0.7">${total>=teamTarget?'Target hit':'Target: '+teamTarget+' pts'}</div>
+      <div class="sum-sub" style="color:${teamColor};opacity:0.7">${total>=teamTarget?'Target hit \u2713':total>=teamYellow?'Almost there':'Target: '+teamTarget+' pts'}</div>
     </div>
     <div class="sum-card">
       <div class="sum-lbl">Top performer</div>
@@ -603,7 +603,7 @@ function renderScores(){
     const ma=avgScore(rep.name,month);
     const t=trendPct(rep.name,week);
     const pct=mx>0?Math.min(100,Math.round(ts/mx*100)):0;
-    const barColor=i===0?'#E8271A':i===1?'#60a8f0':i===2?'#f0b860':'#585654';
+    const barColor=ts>=5?'#60c882':ts>=4?'#f0c040':'#E8271A';i===1?'#60a8f0':i===2?'#f0b860':'#585654';
     let rankHtml='';
     if(i===0)rankHtml='<span class="rank-badge rb-1">#1</span>';
     else if(i===1)rankHtml='<span class="rank-badge rb-2">#2</span>';
@@ -625,7 +625,7 @@ function renderScores(){
         ${rankHtml} ${trendHtml}
       </div>
       <div class="scores-row">
-        <div class="score-cell"><div class="score-lbl">Today</div><div class="score-num" style="color:${ts>=5?'#60c882':'#E8271A'}">${fmt(ts)}</div></div>
+        <div class="score-cell"><div class="score-lbl">Today</div><div class="score-num" style="color:${ts>=5?'#60c882':ts>=4?'#f0c040':'#E8271A'}">${fmt(ts)}</div></div>
         <div class="score-cell"><div class="score-lbl">Week avg</div><div class="score-num">${wa?fmt(wa):'—'}</div></div>
         <div class="score-cell"><div class="score-lbl">Month avg</div><div class="score-num">${ma?fmt(ma):'—'}</div></div>
         <div class="score-cell"><div class="score-lbl">Week trend</div><div class="score-num" style="font-size:16px">${t!==null?(t>0?'+':'')+t+'%':'—'}</div></div>
